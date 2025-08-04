@@ -1,1 +1,6 @@
-# prism
+# prism   
+Acknowledgements   
+OGLDEV   
+   
+OpenSourceLIB   
+assimp
