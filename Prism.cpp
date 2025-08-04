@@ -1,5 +1,8 @@
 #include "Prism.h"
 
+#include "assimp/Importer.hpp"
+#include "assimp/scene.h"
+
 Prism::Prism(HINSTANCE pHInstance) : hInstance{ pHInstance } {
 
 }
@@ -167,7 +170,7 @@ bool Prism::initDx3D() {
 
         ThrowIfFailed(D3D12CreateDevice(
             hardwareAdapter.Get(),
-            D3D_FEATURE_LEVEL_11_0,
+            D3D_FEATURE_LEVEL_12_0,
             IID_PPV_ARGS(&device)
         ));
     }
