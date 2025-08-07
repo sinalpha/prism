@@ -43,26 +43,26 @@ LRESULT Prism::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 int Prism::run() {
 
     MSG msg = { 0 };
-    
-    while (true)
+
+    while (msg.message != WM_QUIT)
     {
-            
-        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-            if (msg.message == WM_QUIT)
-                break;
+
+        if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+        {
+
             TranslateMessage(&msg);
             DispatchMessage(&msg);
-            continue;
+
         }
-
-
-        clearBackBuffer();
-        presentBackBuffer();  
+        else {
+        
+            clearBackBuffer();
+            presentBackBuffer();
+        
+        }
     }
 
-
     return (int)msg.wParam;
-
 
 }
 
