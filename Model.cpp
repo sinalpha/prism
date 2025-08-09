@@ -1,6 +1,5 @@
 #include "Model.h"
 
-
 Model::Model(
 	const Microsoft::WRL::ComPtr<ID3D12Device>& pDevice,
 	const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>& pCommandList)

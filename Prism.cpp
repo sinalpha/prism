@@ -1,4 +1,4 @@
-#include "Prism.h"
+ï»¿#include "Prism.h"
 
 
 Prism::Prism(HINSTANCE pHInstance) : hInstance{ pHInstance } {
@@ -50,7 +50,7 @@ int Prism::run() {
 	Model model(device, commandList);
 	model.LoadModel("assets\\cottage_fbx.fbx");
 
-    //set canera pos
+    /*set canera pos*/
     XMVECTOR pos = XMVectorSet(100.f, 100.f, 100.f, 1.0f);
     XMVECTOR target = XMVectorZero();
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -63,10 +63,6 @@ int Prism::run() {
     XMMATRIX world = XMLoadFloat4x4(&model.GetWorld());
     XMMATRIX proj = XMLoadFloat4x4(&model.GetProj());
     XMMATRIX worldViewProj = world * view * proj;
-
-
-    //XMStoreFloat4x4( &model1.mappedConstBuffer->worldViewProj , XMMatrixTranspose(worldViewProj));
-    
 
     while (msg.message != WM_QUIT)
     {
@@ -81,7 +77,7 @@ int Prism::run() {
         else {
 
             clearBackBuffer();
-            presentBackBuffer();
+            
 
             commandList->SetPipelineState(pipelineState.Get());
             commandList->RSSetViewports(1, &viewport);
@@ -96,6 +92,7 @@ int Prism::run() {
 
             commandList->DrawInstanced(model.GetVerticesNum(), 1, 0, 0);
 
+            presentBackBuffer();
         }
     }
 
@@ -434,7 +431,7 @@ void Prism::clearBackBuffer() {
     commandList->OMSetRenderTargets(1, &hBbvHeap, false, nullptr);
 
  
-    const float clearColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    const float clearColor[] = { .25f, .25f, .25f, 1.0f };
     commandList->ClearRenderTargetView(hBbvHeap, clearColor, 0, nullptr);
 
 }
@@ -469,14 +466,14 @@ void Prism::presentBackBuffer() {
 
 void Prism::waitDrawDone() {
 
-    //fvale°¡ ÄÚ¸Çµå Á¾·á ÈÄ¿¡ ÆÒ½º¿¡ ±â·ÏµÇµµ·Ï ÇÑ´Ù.
+    //fvaleê°€ ì½”ë§¨ë“œ ì¢…ë£Œ í›„ì— íŒ¬ìŠ¤ì— ê¸°ë¡ë˜ë„ë¡ í•œë‹¤.
 	UINT64 fvalue = fenceValue;
 	commandQueue->Signal(fence.Get(), fvalue);
     fenceValue++;
 
-    //¾ÆÁ÷ Ä¿¸ÇµåÅ¥°¡ Á¾·áµÇÁö ¾ÊÀ½À» È®ÀÎÇÑ´Ù.
+    //ì•„ì§ ì»¤ë§¨ë“œíê°€ ì¢…ë£Œë˜ì§€ ì•ŠìŒì„ í™•ì¸í•œë‹¤.
     if (fence->GetCompletedValue() < fvalue) {
-        //fence°¡ fvalue°ªÀÌ µÇ¾ú´Ù¸é Á¾·á¸¦ ¾Ë¸®´Â ÀÌº¥Æ®¸¦ »ý¼ºÇÑ´Ù.
+        //fenceê°€ fvalueê°’ì´ ë˜ì—ˆë‹¤ë©´ ì¢…ë£Œë¥¼ ì•Œë¦¬ëŠ” ì´ë²¤íŠ¸ë¥¼ ìƒì„±í•œë‹¤.
         fence->SetEventOnCompletion(fvalue, fenceEvent);
         WaitForSingleObject(fenceEvent, INFINITE);
 	}
