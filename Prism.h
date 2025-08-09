@@ -12,7 +12,9 @@
 #include <DirectXMath.h>
 #include "d3dx12.h"
 
+#include "ShaderReader.h"
 #include "helper.h"
+#include "BasicMesh.h"
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -45,6 +47,7 @@ private:
 	bool initFence();
 	bool initBackBuffer(ComPtr<IDXGIFactory4>& factory);
 
+	void createPipeLine();
 
 	void clearBackBuffer();
 	void presentBackBuffer();
@@ -69,25 +72,16 @@ private:
 	// Pipeline objects.
 	//device
 	ComPtr<ID3D12Device> device;
-
-	CD3DX12_VIEWPORT viewport;
 	
 	//command
 	ComPtr<ID3D12CommandAllocator> commandAllocator;
 	ComPtr<ID3D12CommandQueue> commandQueue;
 	ComPtr<ID3D12GraphicsCommandList> commandList;
 	
-	//back buffer
-	CD3DX12_RECT scissorRect;
-	ComPtr<IDXGISwapChain4> swapChain;
-	ComPtr<ID3D12Resource> renderTargets[frameCount];
-	UINT frameIndex{ 0 };
-	ComPtr<ID3D12DescriptorHeap> bbvHeap;
-	UINT bbvDescriptorSize{ 0 };
-
 	ComPtr<ID3D12RootSignature> rootSignature;
 	ComPtr<ID3D12PipelineState> pipelineState;
-
+	CD3DX12_VIEWPORT viewport;
+	CD3DX12_RECT scissorRect;
 
 	// Synchronization objects.
 	//fence
@@ -98,10 +92,13 @@ private:
 	//debug
 	HRESULT Hr{ 0 };
 
-	// App resources.
-	ComPtr<ID3D12Resource> vertexBuffer;
-	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{ 0 };
-
+	//resources
+	//back buffer
+	ComPtr<ID3D12Resource> renderTargets[frameCount];
+	ComPtr<IDXGISwapChain4> swapChain;
+	UINT frameIndex{ 0 };
+	ComPtr<ID3D12DescriptorHeap> bbvHeap;
+	UINT bbvDescriptorSize{ 0 };
 
 
 

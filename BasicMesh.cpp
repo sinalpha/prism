@@ -1,7 +1,10 @@
 #include "BasicMesh.h"
 
+BasicMesh::BasicMesh(const Microsoft::WRL::ComPtr<ID3D12Device>& device, const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>& commandList)
+	: device{ device }, commandList{ commandList }
+{
 
-
+}
 
 bool BasicMesh::loadMesh(const std::string& fileName) {
 
@@ -23,6 +26,10 @@ bool BasicMesh::loadMesh(const std::string& fileName) {
 	return ret;
 }
 
+D3D12_VERTEX_BUFFER_VIEW BasicMesh::getVertexBufferView() const {
+	return vertexBufferView;
+}
+
 bool BasicMesh::initFromScene(const aiScene* scene, const std::string& fileName) {
 
 
@@ -36,16 +43,15 @@ bool BasicMesh::initFromScene(const aiScene* scene, const std::string& fileName)
 
 	initAllMeshs(scene);
 
-	if (!initMaterials(scene, fileName)) {
-		return false;
-	}
+	populateBuffer();
 
-	//populateBuffers();
-
-	return //checkError function;
-		true;
+	return true;
 
 
+}
+
+int BasicMesh::getVertexNum() const { 
+	return static_cast<int>(vertices.size()); 
 }
 
 void BasicMesh::countVerticesAndIndices(const aiScene* scene, unsigned int& numVertices, unsigned int& numIndices) {
@@ -69,6 +75,7 @@ void BasicMesh::initAllMeshs(const aiScene* scene) {
 		initSingleMesh(paiMesh);
 	}
 
+
 }
 
 
@@ -82,14 +89,7 @@ void BasicMesh::initSingleMesh(const aiMesh* paiMesh) {
 	for (unsigned int i{ 0 }; i < paiMesh->mNumVertices; i++) {
 		
 		const aiVector3D& pPos{ paiMesh->mVertices[i] };
-		v.Position = DirectX::XMFLOAT3(pPos.x, pPos.y, pPos.z);
-
-
-		const aiVector3D& pNormal{ paiMesh->mNormals[i] };
-		v.Normal = DirectX::XMFLOAT3(pNormal.x, pNormal.y, pNormal.z);
-		
-		const aiVector3D& pTexCoord{ paiMesh->HasTextureCoords(0) ? paiMesh->mTextureCoords[0][i] : Zero3D };
-		v.TexCoords = DirectX::XMFLOAT2(pTexCoord.x, pTexCoord.y);
+		v.position = DirectX::XMFLOAT3(pPos.x, pPos.y, pPos.z);
 
 		vertices.push_back(v);
 	}
@@ -102,6 +102,7 @@ void BasicMesh::initSingleMesh(const aiMesh* paiMesh) {
 		indices.push_back(Face.mIndices[2]);
 	}
 }
+
 
 
 bool BasicMesh::initMaterials(const aiScene* scene, const std::string& fileName) {
@@ -120,10 +121,11 @@ bool BasicMesh::initMaterials(const aiScene* scene, const std::string& fileName)
 
 	bool Ret = true;
 
-	//change the code from this to imgui
+	//ÄÚ¸àÆ®
+	// 
 	//printf("Num materials: %d\n", pScene->mNumMaterials);
-	
-
+	//
+	//
 	// Initialize the materials
 	for (unsigned int i = 0; i < scene->mNumMaterials; i++) {
 		const aiMaterial* pMaterial{ scene->mMaterials[i] };
@@ -138,8 +140,9 @@ bool BasicMesh::initMaterials(const aiScene* scene, const std::string& fileName)
 					p = p.substr(2, p.size() - 2);
 				}
 
-				//std::string fullPath{ dir + "/" + p };
+				std::string fullPath{ DIR + "/" + p };
 
+				//ÀÛ¾÷ ¸ØÃã
 				textures[i] = new Texture();
 			}
 		}
@@ -148,4 +151,71 @@ bool BasicMesh::initMaterials(const aiScene* scene, const std::string& fileName)
 
 	return Ret;
 
+}
+
+void BasicMesh::populateBuffer() {
+
+	// Create the vertex buffer and populate it with vertex data
+	const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+
+	vertexBuffer = createDefaultBuffer(device.Get(), vertices.data(), vbByteSize);
+
+	vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
+	vertexBufferView.SizeInBytes = sizeof(vbByteSize);
+	vertexBufferView.StrideInBytes = sizeof(Vertex);
+
+}
+
+void BasicMesh::populateConstantBuffer() {
+
+	{
+		D3D12_HEAP_PROPERTIES prop;
+		prop.Type = D3D12_HEAP_TYPE_UPLOAD;
+		prop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+		prop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+		prop.CreationNodeMask = 1;
+		prop.VisibleNodeMask = 1;
+		D3D12_RESOURCE_DESC desc = {};
+		desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+		desc.Alignment = 0;
+		desc.Width = 256;
+		desc.Height = 1;
+		desc.DepthOrArraySize = 1;
+		desc.MipLevels = 1;
+		desc.Format = DXGI_FORMAT_UNKNOWN;
+		desc.SampleDesc.Count = 1;
+		desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+		desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+		device->CreateCommittedResource(
+			&prop,
+			D3D12_HEAP_FLAG_NONE,
+			&desc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&constantBuffer)
+		);
+	}
+
+	constantBuffer->Map(0, nullptr, (void**)&mappedConstBuffer);
+
+	{
+		{
+			D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+			desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+			desc.NumDescriptors = 1;
+			desc.NodeMask = 0;
+			desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+			device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&constantBufferHeap));
+
+		}
+
+		auto hCbvHeap = constantBufferHeap->GetCPUDescriptorHandleForHeapStart();
+
+		{
+			D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {};
+			desc.BufferLocation = constantBuffer->GetGPUVirtualAddress();
+			desc.SizeInBytes = static_cast<UINT>(constantBuffer->GetDesc().Width);
+			device->CreateConstantBufferView(&desc, hCbvHeap);
+		}
+	}
 }

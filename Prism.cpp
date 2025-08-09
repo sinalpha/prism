@@ -1,5 +1,6 @@
 #include "Prism.h"
 
+
 Prism::Prism(HINSTANCE pHInstance) : hInstance{ pHInstance } {
 
 }
@@ -44,6 +45,29 @@ int Prism::run() {
 
     MSG msg = { 0 };
 
+    createPipeLine();
+    
+	BasicMesh model1(device, commandList);
+	model1.loadMesh("assets\\cottage_fbx.fbx");
+
+    //set canera pos
+    XMVECTOR pos = XMVectorSet(100.f, 100.f, 100.f, 1.0f);
+    XMVECTOR target = XMVectorZero();
+    XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
+
+    //store view matrix to model1
+    XMStoreFloat4x4(&model1.view, view);
+
+
+    XMMATRIX world = XMLoadFloat4x4(&model1.world);
+    XMMATRIX proj = XMLoadFloat4x4(&model1.proj);
+    XMMATRIX worldViewProj = world * view * proj;
+
+
+    XMStoreFloat4x4( &model1.mappedConstBuffer->worldViewProj , XMMatrixTranspose(worldViewProj));
+    
+
     while (msg.message != WM_QUIT)
     {
 
@@ -55,10 +79,32 @@ int Prism::run() {
 
         }
         else {
+
+			//set pipeline state
+            commandList->SetPipelineState(pipelineState.Get());
+			//set vertical viewport and scissor rect
+            commandList->RSSetViewports(1, &viewport);
+            commandList->RSSetScissorRects(1, &scissorRect);
+			//set root signature
+            commandList->SetGraphicsRootSignature(rootSignature.Get());
+
+			//set vertex buffer
+            D3D12_VERTEX_BUFFER_VIEW vertexBufViews[] = {
+                model1.getVertexBufferView(),
+            };
+
+            commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            commandList->IASetVertexBuffers(0, _countof(vertexBufViews), vertexBufViews);
+            commandList->SetDescriptorHeaps(1, model1.constantBufferHeap.GetAddressOf());
+            auto hCbvHeap = model1.constantBufferHeap->GetGPUDescriptorHandleForHeapStart();
+            commandList->SetGraphicsRootDescriptorTable(0, hCbvHeap);
+            //draw
+            commandList->DrawInstanced((UINT)model1.getVertexNum(), 1, 0, 0);
         
             clearBackBuffer();
             presentBackBuffer();
-        
+
+
         }
     }
 
@@ -166,8 +212,6 @@ bool Prism::initDx3D() {
         MessageBox(nullptr, L"Failed to initialize back buffer.", L"Error", MB_OK);
         return false;
 	}
-
-
 
     return true;
 }
@@ -282,6 +326,127 @@ bool Prism::initBackBuffer(ComPtr<IDXGIFactory4>& factory) {
 
 }
 
+//코멘트
+//문제의 코드
+void Prism::createPipeLine() {
+    
+    //create a root signature
+    {
+        D3D12_DESCRIPTOR_RANGE  range[1] = {};
+        UINT b0 = 0;
+        range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+        range[0].BaseShaderRegister = b0;
+        range[0].NumDescriptors = 1;
+        range[0].RegisterSpace = 0;
+        range[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+   
+        D3D12_ROOT_PARAMETER rootParam[1] = {};
+        rootParam[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        rootParam[0].DescriptorTable.pDescriptorRanges = range;
+        rootParam[0].DescriptorTable.NumDescriptorRanges = _countof(range);
+        rootParam[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+  
+        D3D12_ROOT_SIGNATURE_DESC desc = {};
+        desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+        desc.pParameters = rootParam;
+        desc.NumParameters = _countof(rootParam);
+
+		//serialize the root signature
+        ID3DBlob* blob;
+        Hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &blob, nullptr);
+        assert(SUCCEEDED(Hr));
+
+		//create the root signature
+        Hr = device->CreateRootSignature(0, blob->GetBufferPointer(), blob->GetBufferSize(),
+            IID_PPV_ARGS(&rootSignature));
+        assert(SUCCEEDED(Hr));
+        blob->Release();
+    }
+
+	//read shaerder files
+    ShaderReader vs("assets\\VertexShader.cso");
+    assert(vs.succeeded());
+    ShaderReader ps("assets\\PixelShader.cso");
+    assert(ps.succeeded());
+
+
+    UINT slot0 = 0;
+    D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, slot0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, slot0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, slot0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+    };
+
+    D3D12_RASTERIZER_DESC rasterDesc = {};
+    rasterDesc.FrontCounterClockwise = false;
+    rasterDesc.CullMode = D3D12_CULL_MODE_NONE;
+    rasterDesc.FillMode = D3D12_FILL_MODE_SOLID;
+    rasterDesc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
+    rasterDesc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+    rasterDesc.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+    rasterDesc.DepthClipEnable = true;
+    rasterDesc.MultisampleEnable = false;
+    rasterDesc.AntialiasedLineEnable = false;
+    rasterDesc.ForcedSampleCount = 0;
+    rasterDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+
+    D3D12_BLEND_DESC blendDesc = {};
+    blendDesc.AlphaToCoverageEnable = false;
+    blendDesc.IndependentBlendEnable = false;
+    blendDesc.RenderTarget[0].BlendEnable = false;
+    blendDesc.RenderTarget[0].LogicOpEnable = false;
+    blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+    blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+    blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+    blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+    blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+    blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+    blendDesc.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
+    blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+    D3D12_DEPTH_STENCIL_DESC depthStencilDesc = {};
+    depthStencilDesc.DepthEnable = false;
+    depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+    depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+    depthStencilDesc.StencilEnable = false;
+
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineDesc = {};
+    pipelineDesc.pRootSignature = rootSignature.Get();
+    pipelineDesc.VS = { vs.code(), vs.size() };
+    pipelineDesc.PS = { ps.code(), ps.size() };
+    pipelineDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+    pipelineDesc.RasterizerState = rasterDesc;
+    pipelineDesc.BlendState = blendDesc;
+    pipelineDesc.DepthStencilState = depthStencilDesc;
+    pipelineDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+    pipelineDesc.SampleMask = UINT_MAX;
+    pipelineDesc.SampleDesc.Count = 1;
+    pipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    pipelineDesc.NumRenderTargets = 1;
+    pipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    Hr = device->CreateGraphicsPipelineState(
+        &pipelineDesc,
+        IID_PPV_ARGS(&pipelineState)
+    );
+    assert(SUCCEEDED(Hr));
+
+    //출력영역 설정
+    viewport.TopLeftX = 0.0f;
+    viewport.TopLeftY = 0.0f;
+    viewport.Width = static_cast<FLOAT>(clientWidth);
+    viewport.Height = static_cast<FLOAT>(clientHeight);
+    viewport.MinDepth = 0.0f;
+    viewport.MaxDepth = 1.0f;
+
+    //화면 조절기 설정 
+    scissorRect.left = 0;
+    scissorRect.top = 0;
+    scissorRect.right = clientWidth;
+    scissorRect.bottom = clientHeight;
+}
+
 void Prism::clearBackBuffer() {
 
 
@@ -301,12 +466,8 @@ void Prism::clearBackBuffer() {
     hBbvHeap.ptr += frameIndex * bbvDescriptorSize;
     commandList->OMSetRenderTargets(1, &hBbvHeap, false, nullptr);
 
-    static float radian = 0.0f;
-    float r = cos(radian) * 0.5f + 0.5f;
-    float g = 0.25f;
-    float b = 0.5f;
-    const float clearColor[] = { r, g, b, 1.0f };
-    radian += 0.01f;
+ 
+    const float clearColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     commandList->ClearRenderTargetView(hBbvHeap, clearColor, 0, nullptr);
 
 }
