@@ -14,7 +14,7 @@
 
 #include "ShaderReader.h"
 #include "helper.h"
-#include "BasicMesh.h"
+#include "Model.h"
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;

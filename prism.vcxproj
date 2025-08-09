@@ -133,21 +133,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BasicMesh.cpp" />
     <ClCompile Include="helper.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Material.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="Prism.cpp" />
     <ClCompile Include="ShaderReader.cpp" />
     <ClCompile Include="Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BasicMesh.h" />
     <ClInclude Include="helper.h" />
     <ClInclude Include="Material.h" />
+    <ClInclude Include="MathHelper.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="Prism.h" />
     <ClInclude Include="ShaderReader.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PixelShader.hlsl">
