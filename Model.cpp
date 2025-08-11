@@ -1,8 +1,8 @@
 #include "Model.h"
 
 Model::Model(
-	const Microsoft::WRL::ComPtr<ID3D12Device>& pDevice,
-	const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>& pCommandList)
+	ID3D12Device* pDevice,
+	ID3D12GraphicsCommandList* pCommandList)
 {
 	mDevice = pDevice;
 	mCommandList = pCommandList;
@@ -21,6 +21,14 @@ void Model::LoadModel(const std::string& pFileName) {
 		MessageBox(0, L"Error parsing  Failed.", 0, 0);
 	}
 
+}
+
+
+
+void Model::SetMat(DirectX::XMMATRIX& pMat) {
+
+
+	mMappedBuffer->mat = pMat;
 }
 
 DirectX::XMFLOAT4X4& Model::GetView(){
@@ -43,6 +51,19 @@ int Model::GetVerticesNum() {
 	return mNumVertices;
 }
 
+void Model::SetConstantViewToHeap(Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>& pConstantBufferViewHeap, Microsoft::WRL::ComPtr<ID3D12Resource>& mConstantBuffer) {
+
+	mConstantBuffer->Map(0, nullptr, (void**)&mMappedBuffer);
+
+	auto hConstantBufferViewHeap = pConstantBufferViewHeap->GetCPUDescriptorHandleForHeapStart();
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {};
+	desc.BufferLocation = mConstantBuffer->GetGPUVirtualAddress();
+	desc.SizeInBytes = static_cast<UINT>(mConstantBuffer->GetDesc().Width);
+	mDevice->CreateConstantBufferView(&desc, hConstantBufferViewHeap);
+
+}
+
 void Model::InitFromScene(const aiScene* pScene, const std::string& pFileName) {
 
 	mMeshes.resize(pScene->mNumMeshes);
@@ -51,7 +72,8 @@ void Model::InitFromScene(const aiScene* pScene, const std::string& pFileName) {
 
 	InitAllMeshs(pScene);
 
-	PopulateBuffer();
+	PopulateVertexBuffer();
+
 
 }
 
@@ -92,7 +114,7 @@ void Model::InitSingleMesh(const aiMesh* pAiMesh) {
 
 }
 
-void Model::PopulateBuffer() {
+void Model::PopulateVertexBuffer() {
 
 	const UINT vertexBufferByteSize = sizeof(Vertex) * mNumVertices;
 
@@ -121,7 +143,6 @@ void Model::PopulateBuffer() {
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		IID_PPV_ARGS(mVertexBuffer.GetAddressOf()));
-	assert(SUCCEEDED(Hr));
 
 	UINT8* mappedPositionBuf;
 	mVertexBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mappedPositionBuf));
@@ -133,3 +154,7 @@ void Model::PopulateBuffer() {
 	mVertexBufferView.StrideInBytes = sizeof(Vertex);
 
 }
+
+
+
+

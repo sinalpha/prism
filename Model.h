@@ -2,11 +2,14 @@
 
 #include <vector>
 #include <string>
+#include <cassert>
 
 #include <DirectXMath.h>
 #include <d3dcompiler.h>
 #include <d3d12.h>
 #include <d3dx12.h>
+
+
 
 #include "assimp/Importer.hpp"
 #include "assimp/scene.h"
@@ -20,18 +23,23 @@
 class Model {
 public:
 
-	Model() = default;
+	Model() = delete;
 	~Model() = default;
 
-	Model(const Microsoft::WRL::ComPtr<ID3D12Device>&, const Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>&);
+	Model(ID3D12Device*, ID3D12GraphicsCommandList*);
 
 	void LoadModel(const std::string&);
-	
+
+	void SetMat(DirectX::XMMATRIX&);
+
 	DirectX::XMFLOAT4X4& GetView();
 	DirectX::XMFLOAT4X4& GetProj();
 	DirectX::XMFLOAT4X4& GetWorld();
 	D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView();
 	int GetVerticesNum();
+	void SetConstantViewToHeap(Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>&, Microsoft::WRL::ComPtr<ID3D12Resource>&);
+
+
 
 private:
 
@@ -39,14 +47,18 @@ private:
 		unsigned int baseVertex{ 0 };
 	};
 
-	void InitFromScene(const aiScene* , const std::string&);
+	struct ConstantBuffer {
+		DirectX::XMMATRIX mat;
+	};
+
+	void InitFromScene(const aiScene*, const std::string&);
 	void CountVertices(const aiScene*);
 	void InitAllMeshs(const aiScene*);
 	void InitSingleMesh(const aiMesh*);
-	void PopulateBuffer();
+	void PopulateVertexBuffer();
 
-	Microsoft::WRL::ComPtr<ID3D12Device> mDevice{ nullptr };
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList{ nullptr };
+	ID3D12Device* mDevice{ nullptr };
+	ID3D12GraphicsCommandList* mCommandList{ nullptr };
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> mVertexBuffer{ nullptr };
 	D3D12_VERTEX_BUFFER_VIEW mVertexBufferView{ 0 };
@@ -54,12 +66,11 @@ private:
 	std::vector<BasicMeshEntry> mMeshes;
 	std::vector<Vertex> mVertices;
 	UINT mNumVertices{ 0 };
-	
+
 	DirectX::XMFLOAT4X4 mView{ MathHelper::Identity4x4() };
-	DirectX::XMFLOAT4X4 mProj{ MathHelper::Identity4x4()};
-	DirectX::XMFLOAT4X4 mWorld{ MathHelper::Identity4x4()};
+	DirectX::XMFLOAT4X4 mProj{ MathHelper::Identity4x4() };
+	DirectX::XMFLOAT4X4 mWorld{ MathHelper::Identity4x4() };
+
+	ConstantBuffer* mMappedBuffer{ 0 };
 
 };
-
-
-

@@ -1,4 +1,9 @@
-float4 main( float4 pos : POSITION ) : SV_POSITION
+cbuffer b0 : register(b0)
 {
-	return pos;
+    matrix Mat;
+}
+
+float4 main(float3 pos : POSITION) : SV_POSITION
+{
+    return mul(Mat, float4(pos, 1.f));
 }

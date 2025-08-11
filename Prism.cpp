@@ -10,12 +10,16 @@ Prism::~Prism() {
 }
 
 bool Prism::initialize() {
-
-
+    
 	if(!initWindow()) {
         MessageBox(nullptr, L"er", L"HR Failed", MB_OK);
 		return false;
 	}
+
+    if (!inItConsole()) {
+        MessageBox(nullptr, L"Failed to initialize console.", L"Error", MB_OK);
+		return false;
+    }
 
     if (!initDx3D()) {
         MessageBox(nullptr, L"Failed to initialize Direct3D 12.", L"Error", MB_OK);
@@ -23,8 +27,7 @@ bool Prism::initialize() {
     }
 
 	return true;
-
-
+    
 }
 
 LRESULT Prism::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -43,27 +46,33 @@ LRESULT Prism::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 int Prism::run() {
 
+
     MSG msg = { 0 };
+
+    
+	Model model(device.Get(), commandList.Get());
+	model.LoadModel("assets\\cottage_fbx.fbx");
+    CreateConstantBuffer();
+	model.SetConstantViewToHeap(constantBufferViewHeap, constantBuffer);
+
+
+    ///*set canera pos*/
+    //XMVECTOR pos = XMVectorSet(100.f, 100.f, 100.f, 1.0f);
+    //XMVECTOR target = XMVectorZero();
+    //XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    //XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
+
+    ////store view matrix to model1
+    //XMStoreFloat4x4(&model.GetWorld(), view);
+
+    //XMMATRIX world = XMLoadFloat4x4(&model.GetWorld());
+    //XMMATRIX proj = XMLoadFloat4x4(&model.GetProj());
+    //XMMATRIX worldViewProj = world * view * proj;
+
+
 
     createPipeLine();
     
-	Model model(device, commandList);
-	model.LoadModel("assets\\cottage_fbx.fbx");
-
-    /*set canera pos*/
-    XMVECTOR pos = XMVectorSet(100.f, 100.f, 100.f, 1.0f);
-    XMVECTOR target = XMVectorZero();
-    XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
-
-    //store view matrix to model1
-    XMStoreFloat4x4(&model.GetWorld(), view);
-
-
-    XMMATRIX world = XMLoadFloat4x4(&model.GetWorld());
-    XMMATRIX proj = XMLoadFloat4x4(&model.GetProj());
-    XMMATRIX worldViewProj = world * view * proj;
-
     while (msg.message != WM_QUIT)
     {
 
@@ -77,7 +86,22 @@ int Prism::run() {
         else {
 
             clearBackBuffer();
-            
+
+            //回転用ラジアン
+            static float radian = 0;
+            radian += 0.01f;
+            //ワールドマトリックス
+            XMMATRIX world = XMMatrixRotationY(radian);
+            //ビューマトリックス
+            XMVECTOR eye = { 10.f, 0, 0.0f }, focus = { 0, 0, 0 }, up = { 0, 1, 0 };
+            XMMATRIX view = XMMatrixLookAtLH(eye, focus, up);
+            //プロジェクションマトリックス
+            XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, aspect, 1.0f, 10.0f);
+            //コンスタントバッファ０更新
+			XMMATRIX worldViewProj = world * view * proj;
+
+
+            model.SetMat(worldViewProj);
 
             commandList->SetPipelineState(pipelineState.Get());
             commandList->RSSetViewports(1, &viewport);
@@ -87,8 +111,14 @@ int Prism::run() {
             D3D12_VERTEX_BUFFER_VIEW vertexBufViews[] = {
                 model.GetVertexBufferView(),
             };
+
             commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             commandList->IASetVertexBuffers(0, _countof(vertexBufViews), vertexBufViews);
+
+            commandList->SetDescriptorHeaps(1, constantBufferViewHeap.GetAddressOf());
+
+            auto hCbvHeap = constantBufferViewHeap->GetGPUDescriptorHandleForHeapStart();
+            commandList->SetGraphicsRootDescriptorTable(0, hCbvHeap);
 
             commandList->DrawInstanced(model.GetVerticesNum(), 1, 0, 0);
 
@@ -180,6 +210,17 @@ bool Prism::initWindow() {
 
 }
 
+bool Prism::inItConsole() {
+
+    AllocConsole();
+    freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+    freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
+    freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
+
+    return true;
+
+}
+
 bool Prism::initDx3D() {
        
     UINT dxgiFactoryFlags = 0;
@@ -198,6 +239,11 @@ bool Prism::initDx3D() {
 
     if (!initBackBuffer(factory)) {
         MessageBox(nullptr, L"Failed to initialize back buffer.", L"Error", MB_OK);
+        return false;
+	}
+
+    if (!initConstantBufferViewHeap()) {
+        MessageBox(nullptr, L"Failed to initialize constant buffer.", L"Error", MB_OK);
         return false;
 	}
 
@@ -314,13 +360,41 @@ bool Prism::initBackBuffer(ComPtr<IDXGIFactory4>& factory) {
 
 }
 
+bool Prism::initConstantBufferViewHeap() {
+
+    D3D12_DESCRIPTOR_HEAP_DESC desc{};
+    desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    desc.NumDescriptors = 1;
+    desc.NodeMask = 0;
+    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&constantBufferViewHeap));
+
+
+    return true;
+}
+
 void Prism::createPipeLine() {
     
  
+    D3D12_DESCRIPTOR_RANGE  range[1] = {};
+    UINT b0 = 0;
+    range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+    range[0].BaseShaderRegister = b0;
+    range[0].NumDescriptors = 1;
+    range[0].RegisterSpace = 0;
+    range[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    D3D12_ROOT_PARAMETER rootParam[1] = {};
+    rootParam[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParam[0].DescriptorTable.pDescriptorRanges = range;
+    rootParam[0].DescriptorTable.NumDescriptorRanges = _countof(range);
+    rootParam[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
     D3D12_ROOT_SIGNATURE_DESC desc = {};
     desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+    desc.pParameters = rootParam;
+    desc.NumParameters = _countof(rootParam);
 
- 
     ID3DBlob* blob;
     D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &blob, nullptr);
 
@@ -329,7 +403,6 @@ void Prism::createPipeLine() {
     assert(SUCCEEDED(Hr));
     blob->Release();
  
-
 
     ShaderReader vs("assets\\VertexShader.cso");
     assert(vs.succeeded());
@@ -345,7 +418,7 @@ void Prism::createPipeLine() {
     D3D12_RASTERIZER_DESC rasterDesc = {};
     rasterDesc.FrontCounterClockwise = false;
     rasterDesc.CullMode = D3D12_CULL_MODE_NONE;
-    rasterDesc.FillMode = D3D12_FILL_MODE_SOLID;
+    rasterDesc.FillMode = D3D12_FILL_MODE_WIREFRAME;
     rasterDesc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
     rasterDesc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
     rasterDesc.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
@@ -399,9 +472,9 @@ void Prism::createPipeLine() {
 
     viewport.TopLeftX = 0.0f;
     viewport.TopLeftY = 0.0f;
-    viewport.Width = clientWidth;
+    viewport.Width = (FLOAT)clientWidth;
     viewport.Height = (FLOAT)clientHeight;
-    viewport.MinDepth = (FLOAT)0.0f;
+    viewport.MinDepth = 0.0f;
     viewport.MaxDepth = 1.0f;
 
 
@@ -480,5 +553,3 @@ void Prism::waitDrawDone() {
 
 
 }
-
-
