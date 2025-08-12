@@ -11,9 +11,12 @@ int WINAPI WinMain(
 {
 
 	Prism prism{ hInstance };
-	if (!prism.initialize())
+
+
+
+	if (!prism.Initialize())
 		return 0;
 
-	return prism.run();
+	return prism.Run();
 
 }

@@ -1,8 +1,8 @@
 #include "Model.h"
 
 Model::Model(
-	ID3D12Device* pDevice,
-	ID3D12GraphicsCommandList* pCommandList)
+	Microsoft::WRL::ComPtr<ID3D12Device>&  pDevice,
+	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>& pCommandList)
 {
 	mDevice = pDevice;
 	mCommandList = pCommandList;

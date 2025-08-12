@@ -1,7 +1,7 @@
 ﻿#include "Prism.h"
 
 
-Prism::Prism(HINSTANCE pHInstance) : hInstance{ pHInstance } {
+Prism::Prism(HINSTANCE pHInstance) : mHInstance{ pHInstance } {
 
 }
 
@@ -9,19 +9,19 @@ Prism::~Prism() {
 
 }
 
-bool Prism::initialize() {
+bool Prism::Initialize() {
     
-	if(!initWindow()) {
+	if(!InitWindow()) {
         MessageBox(nullptr, L"er", L"HR Failed", MB_OK);
 		return false;
 	}
 
-    if (!inItConsole()) {
+    if (!InItConsole()) {
         MessageBox(nullptr, L"Failed to initialize console.", L"Error", MB_OK);
 		return false;
     }
 
-    if (!initDx3D()) {
+    if (!InitDx3D()) {
         MessageBox(nullptr, L"Failed to initialize Direct3D 12.", L"Error", MB_OK);
 		return false;
     }
@@ -30,30 +30,30 @@ bool Prism::initialize() {
     
 }
 
-LRESULT Prism::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT Prism::MsgProc(HWND pHwnd, UINT pMsg, WPARAM wParam, LPARAM lParam) {
 
 
-    switch (msg) {
+    switch (pMsg) {
     case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
     default:
-        return DefWindowProc(hwnd, msg, wParam, lParam);
+        return DefWindowProc(pHwnd, pMsg, wParam, lParam);
     }
 
 
 }
 
-int Prism::run() {
+int Prism::Run() {
 
 
     MSG msg = { 0 };
 
     
-	Model model(device.Get(), commandList.Get());
+	Model model(mDevice, mCommandList);
 	model.LoadModel("assets\\cottage_fbx.fbx");
     CreateConstantBuffer();
-	model.SetConstantViewToHeap(constantBufferViewHeap, constantBuffer);
+	model.SetConstantViewToHeap(mConstantBufferViewHeap, mConstantBuffer);
 
 
     ///*set canera pos*/
@@ -71,7 +71,7 @@ int Prism::run() {
 
 
 
-    createPipeLine();
+    CreatePipeLine();
     
     while (msg.message != WM_QUIT)
     {
@@ -85,7 +85,7 @@ int Prism::run() {
         }
         else {
 
-            clearBackBuffer();
+            ClearBackBuffer();
 
             //回転用ラジアン
             static float radian = 0;
@@ -93,36 +93,36 @@ int Prism::run() {
             //ワールドマトリックス
             XMMATRIX world = XMMatrixRotationY(radian);
             //ビューマトリックス
-            XMVECTOR eye = { 10.f, 0, 0.0f }, focus = { 0, 0, 0 }, up = { 0, 1, 0 };
+            XMVECTOR eye = { 15.f, 0, 0.0f }, focus = { 0, 0, 0 }, up = { 0, 1, 0 };
             XMMATRIX view = XMMatrixLookAtLH(eye, focus, up);
             //プロジェクションマトリックス
-            XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, aspect, 1.0f, 10.0f);
+            XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, mAspect, 1.0f, 100.0f);
             //コンスタントバッファ０更新
 			XMMATRIX worldViewProj = world * view * proj;
 
 
             model.SetMat(worldViewProj);
 
-            commandList->SetPipelineState(pipelineState.Get());
-            commandList->RSSetViewports(1, &viewport);
-            commandList->RSSetScissorRects(1, &scissorRect);
-            commandList->SetGraphicsRootSignature(rootSignature.Get());
+            mCommandList->SetPipelineState(mPipelineState.Get());
+            mCommandList->RSSetViewports(1, &mViewport);
+            mCommandList->RSSetScissorRects(1, &mScissorRect);
+            mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
             D3D12_VERTEX_BUFFER_VIEW vertexBufViews[] = {
                 model.GetVertexBufferView(),
             };
 
-            commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            commandList->IASetVertexBuffers(0, _countof(vertexBufViews), vertexBufViews);
+            mCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            mCommandList->IASetVertexBuffers(0, _countof(vertexBufViews), vertexBufViews);
 
-            commandList->SetDescriptorHeaps(1, constantBufferViewHeap.GetAddressOf());
+            mCommandList->SetDescriptorHeaps(1, mConstantBufferViewHeap.GetAddressOf());
 
-            auto hCbvHeap = constantBufferViewHeap->GetGPUDescriptorHandleForHeapStart();
-            commandList->SetGraphicsRootDescriptorTable(0, hCbvHeap);
+            auto hCbvHeap = mConstantBufferViewHeap->GetGPUDescriptorHandleForHeapStart();
+            mCommandList->SetGraphicsRootDescriptorTable(0, hCbvHeap);
 
-            commandList->DrawInstanced(model.GetVerticesNum(), 1, 0, 0);
+            mCommandList->DrawInstanced(model.GetVerticesNum(), 1, 0, 0);
 
-            presentBackBuffer();
+            PresentBackBuffer();
         }
     }
 
@@ -130,7 +130,7 @@ int Prism::run() {
 
 }
 
-void Prism::getHardwareAdapter(IDXGIFactory2* pFactory, IDXGIAdapter1** ppAdapter)
+void Prism::GetHardwareAdapter(IDXGIFactory2* pFactory, IDXGIAdapter1** ppAdapter)
 {
     ComPtr<IDXGIAdapter1> adapter;
     *ppAdapter = nullptr;
@@ -158,20 +158,20 @@ void Prism::getHardwareAdapter(IDXGIFactory2* pFactory, IDXGIAdapter1** ppAdapte
     *ppAdapter = adapter.Detach();
 }
 
-bool Prism::initWindow() {
+bool Prism::InitWindow() {
 	
 	// Set up the window class
-	windowClass.style = CS_HREDRAW | CS_VREDRAW;
-	windowClass.lpszClassName = L"WINDOW_CLASS";
-	windowClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-	windowClass.hInstance = hInstance;
-	windowClass.lpfnWndProc = MsgProc;
-	windowClass.hIcon = LoadIcon(NULL, IDC_ICON);
-	windowClass.cbClsExtra = 0;
-	windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
-	windowClass.cbSize = sizeof(WNDCLASSEX);
+	mWindowClass.style = CS_HREDRAW | CS_VREDRAW;
+    mWindowClass.lpszClassName = L"WINDOW_CLASS";
+    mWindowClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    mWindowClass.hInstance = mHInstance;
+    mWindowClass.lpfnWndProc = MsgProc;
+    mWindowClass.hIcon = LoadIcon(NULL, IDC_ICON);
+    mWindowClass.cbClsExtra = 0;
+    mWindowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+    mWindowClass.cbSize = sizeof(WNDCLASSEX);
 	
-	if (!RegisterClassEx(&windowClass)) {
+	if (!RegisterClassEx(&mWindowClass)) {
 
         MessageBox(0, L"RegisterClass Failed.", 0, 0);
 		return false;
@@ -179,18 +179,18 @@ bool Prism::initWindow() {
 	}
 
 	// Calculate the window size based on the client area size
-    RECT windowRect = { 0, 0, clientWidth, clientHeight };
+    RECT windowRect = { 0, 0, mClientWidth, mClientHeight };
     AdjustWindowRect(&windowRect, WS_POPUP, FALSE);
-    int windowLeft = clientLeft + windowRect.left;
-    int windowTop = clientTop + windowRect.top;
+    int windowLeft = mClientLeft + windowRect.left;
+    int windowTop = mClientTop + windowRect.top;
     int windowWidth = windowRect.right - windowRect.left;
     int windowHeight = windowRect.bottom - windowRect.top;
     
 	// Create the window
-    hWindow = CreateWindowEx(
+    mHWindow = CreateWindowEx(
         NULL,
         L"WINDOW_CLASS",
-        windowTitle,
+        mWindowTitle,
         WS_POPUP,
         windowLeft,
         windowTop,
@@ -198,21 +198,22 @@ bool Prism::initWindow() {
         windowHeight,
         NULL,
         NULL,
-        hInstance,
+        mHInstance,
         NULL
     );
 
-    ShowWindow(hWindow, SW_SHOW);
-    UpdateWindow(hWindow);
+    ShowWindow(mHWindow, SW_SHOW);
+    UpdateWindow(mHWindow);
 
     return true;
 
 
 }
 
-bool Prism::inItConsole() {
+bool Prism::InItConsole() {
 
     AllocConsole();
+    
     freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
     freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
     freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
@@ -221,28 +222,33 @@ bool Prism::inItConsole() {
 
 }
 
-bool Prism::initDx3D() {
+bool Prism::InitDx3D() {
        
     UINT dxgiFactoryFlags = 0;
     ComPtr<IDXGIFactory4> factory;
     ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)));
 
-    if (!initDeviceAndCommandInterfaces(factory)) {
-        MessageBox(nullptr, L"Failed to initialize device and command interfaces.", L"Error", MB_OK);
+    if (!InitDevice(factory)) {
+        MessageBox(nullptr, L"Failed to initialize device.", L"Error", MB_OK);
         return false;
 	}
 
-    if (!initFence()) {
+    if (!InitCommandInterfaces()) {
+        MessageBox(nullptr, L"Failed to initialize command interfaces.", L"Error", MB_OK);
+        return false;
+    }
+
+    if (!InitFence()) {
         MessageBox(nullptr, L"Failed to initialize fence.", L"Error", MB_OK);
         return false;
     }
 
-    if (!initBackBuffer(factory)) {
+    if (!InitBackBuffer(factory)) {
         MessageBox(nullptr, L"Failed to initialize back buffer.", L"Error", MB_OK);
         return false;
 	}
 
-    if (!initConstantBufferViewHeap()) {
+    if (!InitConstantBufferViewHeap()) {
         MessageBox(nullptr, L"Failed to initialize constant buffer.", L"Error", MB_OK);
         return false;
 	}
@@ -250,109 +256,116 @@ bool Prism::initDx3D() {
     return true;
 }
 
-bool Prism::initDeviceAndCommandInterfaces(ComPtr<IDXGIFactory4>& factory) {
+bool Prism::InitDevice(ComPtr<IDXGIFactory4>& pFactory) {
 
-    if (useWarpDevice)
+    if (scmUseWarpDevice)
     {
         ComPtr<IDXGIAdapter> warpAdapter;
-        ThrowIfFailed(factory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)));
+        ThrowIfFailed(pFactory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)));
 
         ThrowIfFailed(D3D12CreateDevice(
             warpAdapter.Get(),
             D3D_FEATURE_LEVEL_11_0,
-            IID_PPV_ARGS(&device)
+            IID_PPV_ARGS(&mDevice)
         ));
     }
     else
     {
         ComPtr<IDXGIAdapter1> hardwareAdapter;
-        getHardwareAdapter(factory.Get(), &hardwareAdapter);
+        GetHardwareAdapter(pFactory.Get(), &hardwareAdapter);
 
         ThrowIfFailed(D3D12CreateDevice(
             hardwareAdapter.Get(),
             D3D_FEATURE_LEVEL_12_0,
-            IID_PPV_ARGS(&device)
+            IID_PPV_ARGS(&mDevice)
         ));
     }
+
+    return true;
+
+}
+
+bool Prism::InitCommandInterfaces() {
+
 
     // Describe and create the command queue.
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
     queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
-    ThrowIfFailed(device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue)));
+    ThrowIfFailed(mDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&mCommandQueue)));
 
-    ThrowIfFailed(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
+    ThrowIfFailed(mDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mCommandAllocator)));
 
-    ThrowIfFailed(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-        commandAllocator.Get(),
-        nullptr, IID_PPV_ARGS(&commandList)));
+    ThrowIfFailed(mDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+        mCommandAllocator.Get(),
+        nullptr, IID_PPV_ARGS(mCommandList.GetAddressOf())));
 
 
     return true;
 }
 
-bool Prism::initFence() {
+bool Prism::InitFence() {
 
-    ThrowIfFailed(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
-    if (nullptr == (fenceEvent = CreateEventEx(nullptr, FALSE, FALSE, EVENT_ALL_ACCESS))) {
+    ThrowIfFailed(mDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence)));
+    if (nullptr == (mFenceEvent = CreateEventEx(nullptr, FALSE, FALSE, EVENT_ALL_ACCESS))) {
 
         MessageBox(nullptr, L"err", L"Failed to create Fence objects", MB_OK);
         return false;
 
     }
-    fenceValue = 1;
+    mFenceValue = 1;
 
     return true;
 }
 
-bool Prism::initBackBuffer(ComPtr<IDXGIFactory4>& factory) {
+bool Prism::InitBackBuffer(ComPtr<IDXGIFactory4>& pFactory) {
 
     // Describe and create the swap chain.
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-    swapChainDesc.BufferCount = frameCount;
-    swapChainDesc.Width = clientWidth;
-    swapChainDesc.Height = clientHeight;
+    swapChainDesc.BufferCount = scmFrameCount;
+    swapChainDesc.Width = mClientWidth;
+    swapChainDesc.Height = mClientHeight;
     swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.SampleDesc.Count = 1;
 
     ComPtr<IDXGISwapChain1> initSwapChain;
-    ThrowIfFailed(factory->CreateSwapChainForHwnd(
-        commandQueue.Get(),		// Swap chain needs the queue so that it can force a flush on it.
-        hWindow,
+    ThrowIfFailed(pFactory->CreateSwapChainForHwnd(
+        mCommandQueue.Get(),		// Swap chain needs the queue so that it can force a flush on it.
+        mHWindow,
         &swapChainDesc,
         nullptr,
         nullptr,
         &initSwapChain
     ));
 
-    ThrowIfFailed(initSwapChain.As(&swapChain));
-    frameIndex = swapChain->GetCurrentBackBufferIndex();
+    ThrowIfFailed(initSwapChain.As(&mSwapChain));
+    mFrameIndex = mSwapChain->GetCurrentBackBufferIndex();
 
     // Create descriptor heaps.
     {
         // Describe and create a render target view (RTV) descriptor heap.
         D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-        rtvHeapDesc.NumDescriptors = frameCount;
+        rtvHeapDesc.NumDescriptors = scmFrameCount;
         rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
         rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-        ThrowIfFailed(device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&bbvHeap)));
+        ThrowIfFailed(mDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&mBackBufferViewHeap)));
 
-        bbvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        mBackBufferViewDescriptorSize = mDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     }
 
     // Create frame resources.
     {
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(bbvHeap->GetCPUDescriptorHandleForHeapStart());
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(mBackBufferViewHeap->GetCPUDescriptorHandleForHeapStart());
 
         // Create a RTV for each frame.
-        for (UINT n = 0; n < frameCount; ++n)
+        for (UINT n = 0; n < scmFrameCount; ++n)
         {
-            ThrowIfFailed(swapChain->GetBuffer(n, IID_PPV_ARGS(&renderTargets[n])));
-            device->CreateRenderTargetView(renderTargets[n].Get(), nullptr, rtvHandle);
-            rtvHandle.Offset(1, bbvDescriptorSize);
+            ThrowIfFailed(mSwapChain->GetBuffer(n, IID_PPV_ARGS(&mRenderTargets[n])));
+            mDevice->CreateRenderTargetView(mRenderTargets[n].Get(), nullptr, rtvHandle);
+            rtvHandle.Offset(1, mBackBufferViewDescriptorSize);
         }
     }
 
@@ -360,20 +373,20 @@ bool Prism::initBackBuffer(ComPtr<IDXGIFactory4>& factory) {
 
 }
 
-bool Prism::initConstantBufferViewHeap() {
+bool Prism::InitConstantBufferViewHeap() {
 
     D3D12_DESCRIPTOR_HEAP_DESC desc{};
     desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     desc.NumDescriptors = 1;
     desc.NodeMask = 0;
     desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&constantBufferViewHeap));
+    mDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(mConstantBufferViewHeap.GetAddressOf()));
 
 
     return true;
 }
 
-void Prism::createPipeLine() {
+void Prism::CreatePipeLine() {
     
  
     D3D12_DESCRIPTOR_RANGE  range[1] = {};
@@ -398,8 +411,8 @@ void Prism::createPipeLine() {
     ID3DBlob* blob;
     D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &blob, nullptr);
 
-    device->CreateRootSignature(0, blob->GetBufferPointer(), blob->GetBufferSize(),
-        IID_PPV_ARGS(rootSignature.GetAddressOf()));
+    mDevice->CreateRootSignature(0, blob->GetBufferPointer(), blob->GetBufferSize(),
+        IID_PPV_ARGS(mRootSignature.GetAddressOf()));
     assert(SUCCEEDED(Hr));
     blob->Release();
  
@@ -451,7 +464,7 @@ void Prism::createPipeLine() {
 
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineDesc = {};
-    pipelineDesc.pRootSignature = rootSignature.Get();
+    pipelineDesc.pRootSignature = mRootSignature.Get();
     pipelineDesc.VS = { vs.code(), vs.size() };
     pipelineDesc.PS = { ps.code(), ps.size() };
     pipelineDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
@@ -464,92 +477,125 @@ void Prism::createPipeLine() {
     pipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     pipelineDesc.NumRenderTargets = 1;
     pipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-    device->CreateGraphicsPipelineState(
+    mDevice->CreateGraphicsPipelineState(
         &pipelineDesc,
-        IID_PPV_ARGS(pipelineState.GetAddressOf())
+        IID_PPV_ARGS(mPipelineState.GetAddressOf())
     );
 
 
-    viewport.TopLeftX = 0.0f;
-    viewport.TopLeftY = 0.0f;
-    viewport.Width = (FLOAT)clientWidth;
-    viewport.Height = (FLOAT)clientHeight;
-    viewport.MinDepth = 0.0f;
-    viewport.MaxDepth = 1.0f;
+    mViewport.TopLeftX = 0.0f;
+    mViewport.TopLeftY = 0.0f;
+    mViewport.Width = (FLOAT)mClientWidth;
+    mViewport.Height = (FLOAT)mClientHeight;
+    mViewport.MinDepth = 0.0f;
+    mViewport.MaxDepth = 1.0f;
 
 
-    scissorRect.left = 0;
-    scissorRect.top = 0;
-    scissorRect.right = clientWidth;
-    scissorRect.bottom = clientHeight;
+    mScissorRect.left = 0;
+    mScissorRect.top = 0;
+    mScissorRect.right = mClientWidth;
+    mScissorRect.bottom = mClientHeight;
 }
 
-void Prism::clearBackBuffer() {
+void Prism::ClearBackBuffer() {
 
 
-    frameIndex = swapChain->GetCurrentBackBufferIndex();
+    mFrameIndex = mSwapChain->GetCurrentBackBufferIndex();
 
     D3D12_RESOURCE_BARRIER barrier;
     barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
     barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    barrier.Transition.pResource = renderTargets[frameIndex].Get();
+    barrier.Transition.pResource = mRenderTargets[mFrameIndex].Get();
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
     barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
     barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    commandList->ResourceBarrier(1, &barrier);
+    mCommandList->ResourceBarrier(1, &barrier);
 
  
-    auto hBbvHeap = bbvHeap->GetCPUDescriptorHandleForHeapStart();
-    hBbvHeap.ptr += frameIndex * bbvDescriptorSize;
-    commandList->OMSetRenderTargets(1, &hBbvHeap, false, nullptr);
+    auto hBbvHeap = mBackBufferViewHeap->GetCPUDescriptorHandleForHeapStart();
+    hBbvHeap.ptr += mFrameIndex * mBackBufferViewDescriptorSize;
+    mCommandList->OMSetRenderTargets(1, &hBbvHeap, false, nullptr);
 
  
     const float clearColor[] = { .25f, .25f, .25f, 1.0f };
-    commandList->ClearRenderTargetView(hBbvHeap, clearColor, 0, nullptr);
+    mCommandList->ClearRenderTargetView(hBbvHeap, clearColor, 0, nullptr);
 
 }
 
-void Prism::presentBackBuffer() {
+void Prism::PresentBackBuffer() {
     
     D3D12_RESOURCE_BARRIER barrier;
     barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
     barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    barrier.Transition.pResource = renderTargets[frameIndex].Get();
+    barrier.Transition.pResource = mRenderTargets[mFrameIndex].Get();
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
     barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
     barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    commandList->ResourceBarrier(1, &barrier);
+    mCommandList->ResourceBarrier(1, &barrier);
 
-    commandList->Close();
+    mCommandList->Close();
 
-    ID3D12CommandList* commandLists[] = { commandList.Get()};
-    commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
+    ID3D12CommandList* commandLists[] = { mCommandList.Get()};
+    mCommandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
 
-    waitDrawDone();
+    WaitDrawDone();
 
   
-    swapChain->Present(1, 0);
+    mSwapChain->Present(1, 0);
 
-    Hr = commandAllocator.Get()->Reset();
+    mCommandAllocator.Get()->Reset();
 
-    Hr = commandList->Reset(commandAllocator.Get(), nullptr);
-    assert(SUCCEEDED(Hr));
+    mCommandList->Reset(mCommandAllocator.Get(), nullptr);
+
 
 }
 
-void Prism::waitDrawDone() {
+void Prism::WaitDrawDone() {
 
     //fvale가 코맨드 종료 후에 팬스에 기록되도록 한다.
-	UINT64 fvalue = fenceValue;
-	commandQueue->Signal(fence.Get(), fvalue);
-    fenceValue++;
+	UINT64 fvalue = mFenceValue;
+	mCommandQueue->Signal(mFence.Get(), fvalue);
+    mFenceValue++;
 
     //아직 커맨드큐가 종료되지 않음을 확인한다.
-    if (fence->GetCompletedValue() < fvalue) {
+    if (mFence->GetCompletedValue() < fvalue) {
         //fence가 fvalue값이 되었다면 종료를 알리는 이벤트를 생성한다.
-        fence->SetEventOnCompletion(fvalue, fenceEvent);
-        WaitForSingleObject(fenceEvent, INFINITE);
+        mFence->SetEventOnCompletion(fvalue, mFenceEvent);
+        WaitForSingleObject(mFenceEvent, INFINITE);
 	}
 
+
+}
+
+void Prism::CreateConstantBuffer() {
+    
+
+    D3D12_HEAP_PROPERTIES prop = {};
+    prop.Type = D3D12_HEAP_TYPE_UPLOAD;
+    prop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    prop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+    prop.CreationNodeMask = 1;
+    prop.VisibleNodeMask = 1;
+    D3D12_RESOURCE_DESC desc = {};
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    desc.Alignment = 0;
+    desc.Width = 256;
+    desc.Height = 1;
+    desc.DepthOrArraySize = 1;
+    desc.MipLevels = 1;
+    desc.Format = DXGI_FORMAT_UNKNOWN;
+    desc.SampleDesc.Count = 1;
+    desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+    mDevice->CreateCommittedResource(
+        &prop,
+        D3D12_HEAP_FLAG_NONE,
+        &desc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&mConstantBuffer)
+    );
+    
 
 }

@@ -26,121 +26,88 @@ class Prism {
 public:
 
 
-	Prism(HINSTANCE pHInstance);
+	Prism(HINSTANCE);
 	Prism(const Prism&) = delete;
 	Prism& operator=(const Prism&) = delete;
 	~Prism();
 
 
-	bool initialize();
-	static LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	bool Initialize();
+	static LRESULT MsgProc(HWND, UINT, WPARAM, LPARAM);
 
 
-	int run();
+	int Run();
 
 
 private:
 
-	void getHardwareAdapter(IDXGIFactory2* pFactory, IDXGIAdapter1** ppAdapter);
+	void GetHardwareAdapter(IDXGIFactory2*, IDXGIAdapter1**);
 
-	bool initWindow();
-	bool inItConsole();
-	bool initDx3D();
-	bool initDeviceAndCommandInterfaces(ComPtr<IDXGIFactory4>& factory);
-	bool initFence();
-	bool initBackBuffer(ComPtr<IDXGIFactory4>& factory);
-	bool initConstantBufferViewHeap();
+	bool InitWindow();
+	bool InItConsole();
+	bool InitDx3D();
+	bool InitDevice(ComPtr<IDXGIFactory4>&);
+	bool InitCommandInterfaces();
+	bool InitFence();
+	bool InitBackBuffer(ComPtr<IDXGIFactory4>&);
+	bool InitConstantBufferViewHeap();
 
-	void createPipeLine();
+	void CreatePipeLine();
 
-	void clearBackBuffer();
-	void presentBackBuffer();
-	void waitDrawDone();
+	void ClearBackBuffer();
+	void PresentBackBuffer();
+	void WaitDrawDone();
+	void CreateConstantBuffer();
 
-	static const UINT frameCount{ 2 };
-	static const bool useWarpDevice{ false };
+	static const UINT scmFrameCount{ 2 };
+	static const bool scmUseWarpDevice{ false };
 
 	// variable for setting window;
-	HINSTANCE hInstance{ NULL };
-	WNDCLASSEX windowClass{ NULL };
-	HWND hWindow{ NULL };
-	LPCWSTR	windowTitle{ L"prism" };
-	int clientWidth{ 1280 };
-	int clientHeight{ 720 };
-	int displayWidth{ GetSystemMetrics(SM_CXSCREEN) };
-	int displayHeight{ GetSystemMetrics(SM_CYSCREEN) };
-	int clientLeft{ (displayWidth - clientWidth) / 2 };
-	int clientTop{ (displayHeight - clientHeight) / 2 };
-	float aspect{ static_cast<float> (clientWidth / static_cast<float>(clientHeight)) };
+	HINSTANCE mHInstance{ NULL };
+	WNDCLASSEX mWindowClass{ NULL };
+	HWND mHWindow{ NULL };
+	LPCWSTR	mWindowTitle{ L"prism" };
+	int mClientWidth{ 1280 };
+	int mClientHeight{ 720 };
+	int mDisplayWidth{ GetSystemMetrics(SM_CXSCREEN) };
+	int mDisplayHeight{ GetSystemMetrics(SM_CYSCREEN) };
+	int mClientLeft{ (mDisplayWidth - mClientWidth) / 2 };
+	int mClientTop{ (mDisplayHeight - mClientHeight) / 2 };
+	float mAspect{ static_cast<float> (mClientWidth / static_cast<float>(mClientHeight)) };
 
 	// Pipeline objects.
 	//device
-	ComPtr<ID3D12Device> device;
+	ComPtr<ID3D12Device> mDevice;
 	
 	//command
-	ComPtr<ID3D12CommandAllocator> commandAllocator;
-	ComPtr<ID3D12CommandQueue> commandQueue;
-	ComPtr<ID3D12GraphicsCommandList> commandList;
+	ComPtr<ID3D12CommandAllocator> mCommandAllocator;
+	ComPtr<ID3D12CommandQueue> mCommandQueue;
+	ComPtr<ID3D12GraphicsCommandList> mCommandList;
 	
-	ComPtr<ID3D12RootSignature> rootSignature;
-	ComPtr<ID3D12PipelineState> pipelineState;
-	CD3DX12_VIEWPORT viewport;
-	CD3DX12_RECT scissorRect;
+	ComPtr<ID3D12RootSignature> mRootSignature;
+	ComPtr<ID3D12PipelineState> mPipelineState;
+	CD3DX12_VIEWPORT mViewport;
+	CD3DX12_RECT mScissorRect;
 
 	// Synchronization objects.
 	//fence
-	ComPtr<ID3D12Fence> fence;
-	HANDLE fenceEvent{ NULL };
-	UINT64 fenceValue{ 0 };
+	ComPtr<ID3D12Fence> mFence;
+	HANDLE mFenceEvent{ NULL };
+	UINT64 mFenceValue{ 0 };
 
 	//debug
-	HRESULT Hr{ 0 };
+	HRESULT mHr{ 0 };
 
 	//resources
 	//back buffer
-	ComPtr<ID3D12Resource> renderTargets[frameCount];
-	ComPtr<IDXGISwapChain4> swapChain;
-	UINT frameIndex{ 0 };
-	ComPtr<ID3D12DescriptorHeap> bbvHeap;
-	UINT bbvDescriptorSize{ 0 };
+	ComPtr<ID3D12Resource> mRenderTargets[scmFrameCount];
+	ComPtr<IDXGISwapChain4> mSwapChain;
+	UINT mFrameIndex{ 0 };
+	ComPtr<ID3D12DescriptorHeap> mBackBufferViewHeap;
+	UINT mBackBufferViewDescriptorSize{ 0 };
 
-	ComPtr<ID3D12DescriptorHeap> constantBufferViewHeap{ };
-	Microsoft::WRL::ComPtr<ID3D12Resource> constantBuffer{ };
+	ComPtr<ID3D12DescriptorHeap> mConstantBufferViewHeap{ };
+	ComPtr<ID3D12Resource> mConstantBuffer{ };
 
-	void CreateConstantBuffer() {
-
-		D3D12_HEAP_PROPERTIES prop = {};
-		prop.Type = D3D12_HEAP_TYPE_UPLOAD;
-		prop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-		prop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-		prop.CreationNodeMask = 1;
-		prop.VisibleNodeMask = 1;
-		D3D12_RESOURCE_DESC desc = {};
-		desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-		desc.Alignment = 0;
-		desc.Width = 256;
-		desc.Height = 1;
-		desc.DepthOrArraySize = 1;
-		desc.MipLevels = 1;
-		desc.Format = DXGI_FORMAT_UNKNOWN;
-		desc.SampleDesc.Count = 1;
-		desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-		desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-
-		device->CreateCommittedResource(
-			&prop,
-			D3D12_HEAP_FLAG_NONE,
-			&desc,
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			nullptr,
-			IID_PPV_ARGS(&constantBuffer)
-		);
-
-
-
-
-
-
-	}
 
 };

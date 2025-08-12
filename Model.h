@@ -26,7 +26,7 @@ public:
 	Model() = delete;
 	~Model() = default;
 
-	Model(ID3D12Device*, ID3D12GraphicsCommandList*);
+	Model(Microsoft::WRL::ComPtr<ID3D12Device>&, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>&);
 
 	void LoadModel(const std::string&);
 
@@ -57,8 +57,8 @@ private:
 	void InitSingleMesh(const aiMesh*);
 	void PopulateVertexBuffer();
 
-	ID3D12Device* mDevice{ nullptr };
-	ID3D12GraphicsCommandList* mCommandList{ nullptr };
+	Microsoft::WRL::ComPtr<ID3D12Device> mDevice{ nullptr };
+	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList{ nullptr };
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> mVertexBuffer{ nullptr };
 	D3D12_VERTEX_BUFFER_VIEW mVertexBufferView{ 0 };
