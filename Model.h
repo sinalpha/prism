@@ -23,7 +23,7 @@
 class Model {
 public:
 
-	Model() = delete;
+	Model() = default;
 	~Model() = default;
 
 	Model(Microsoft::WRL::ComPtr<ID3D12Device>&, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>&);
@@ -36,7 +36,9 @@ public:
 	DirectX::XMFLOAT4X4& GetProj();
 	DirectX::XMFLOAT4X4& GetWorld();
 	D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView();
+	D3D12_INDEX_BUFFER_VIEW GetIndexBufferView();
 	int GetVerticesNum();
+	int GetIndicesNum();
 	void SetConstantViewToHeap(Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>&, Microsoft::WRL::ComPtr<ID3D12Resource>&);
 
 
@@ -44,7 +46,9 @@ public:
 private:
 
 	struct BasicMeshEntry {
+		unsigned int numIndices{ 0 };
 		unsigned int baseVertex{ 0 };
+		unsigned int baseIndex{ 0 };
 	};
 
 	struct ConstantBuffer {
@@ -52,20 +56,25 @@ private:
 	};
 
 	void InitFromScene(const aiScene*, const std::string&);
-	void CountVertices(const aiScene*);
+	void CountVerticesAndIndices(const aiScene*);
 	void InitAllMeshs(const aiScene*);
 	void InitSingleMesh(const aiMesh*);
 	void PopulateVertexBuffer();
+	void PopulateIndexBuffer();
 
 	Microsoft::WRL::ComPtr<ID3D12Device> mDevice{ nullptr };
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList{ nullptr };
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> mVertexBuffer{ nullptr };
 	D3D12_VERTEX_BUFFER_VIEW mVertexBufferView{ 0 };
+	Microsoft::WRL::ComPtr<ID3D12Resource> mIndexBuffer{ nullptr };
+	D3D12_INDEX_BUFFER_VIEW mIndexBufferView{ 0 };
 
 	std::vector<BasicMeshEntry> mMeshes;
 	std::vector<Vertex> mVertices;
+	std::vector<UINT> mIndices;
 	UINT mNumVertices{ 0 };
+	UINT mNumIndices{ 0 };
 
 	DirectX::XMFLOAT4X4 mView{ MathHelper::Identity4x4() };
 	DirectX::XMFLOAT4X4 mProj{ MathHelper::Identity4x4() };

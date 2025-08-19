@@ -1,6 +1,5 @@
 ﻿#include "Prism.h"
 
-
 Prism::Prism(HINSTANCE pHInstance) : mHInstance{ pHInstance } {
 
 }
@@ -26,6 +25,11 @@ bool Prism::Initialize() {
 		return false;
     }
 
+    if (!InitScenes()){
+		MessageBox(nullptr, L"Failed to initialize scenes.", L"Error", MB_OK);
+        return false;
+    }
+
 	return true;
     
 }
@@ -48,30 +52,6 @@ int Prism::Run() {
 
 
     MSG msg = { 0 };
-
-    
-	Model model(mDevice, mCommandList);
-	model.LoadModel("assets\\cottage_fbx.fbx");
-    CreateConstantBuffer();
-	model.SetConstantViewToHeap(mConstantBufferViewHeap, mConstantBuffer);
-
-
-    ///*set canera pos*/
-    //XMVECTOR pos = XMVectorSet(100.f, 100.f, 100.f, 1.0f);
-    //XMVECTOR target = XMVectorZero();
-    //XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    //XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
-
-    ////store view matrix to model1
-    //XMStoreFloat4x4(&model.GetWorld(), view);
-
-    //XMMATRIX world = XMLoadFloat4x4(&model.GetWorld());
-    //XMMATRIX proj = XMLoadFloat4x4(&model.GetProj());
-    //XMMATRIX worldViewProj = world * view * proj;
-
-
-
-    CreatePipeLine();
     
     while (msg.message != WM_QUIT)
     {
@@ -85,48 +65,46 @@ int Prism::Run() {
         }
         else {
 
-            ClearBackBuffer();
+            Update();
+            Render();
 
-            //回転用ラジアン
-            static float radian = 0;
-            radian += 0.01f;
-            //ワールドマトリックス
-            XMMATRIX world = XMMatrixRotationY(radian);
-            //ビューマトリックス
-            XMVECTOR eye = { 15.f, 0, 0.0f }, focus = { 0, 0, 0 }, up = { 0, 1, 0 };
-            XMMATRIX view = XMMatrixLookAtLH(eye, focus, up);
-            //プロジェクションマトリックス
-            XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, mAspect, 1.0f, 100.0f);
-            //コンスタントバッファ０更新
-			XMMATRIX worldViewProj = world * view * proj;
-
-
-            model.SetMat(worldViewProj);
-
-            mCommandList->SetPipelineState(mPipelineState.Get());
-            mCommandList->RSSetViewports(1, &mViewport);
-            mCommandList->RSSetScissorRects(1, &mScissorRect);
-            mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
-
-            D3D12_VERTEX_BUFFER_VIEW vertexBufViews[] = {
-                model.GetVertexBufferView(),
-            };
-
-            mCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            mCommandList->IASetVertexBuffers(0, _countof(vertexBufViews), vertexBufViews);
-
-            mCommandList->SetDescriptorHeaps(1, mConstantBufferViewHeap.GetAddressOf());
-
-            auto hCbvHeap = mConstantBufferViewHeap->GetGPUDescriptorHandleForHeapStart();
-            mCommandList->SetGraphicsRootDescriptorTable(0, hCbvHeap);
-
-            mCommandList->DrawInstanced(model.GetVerticesNum(), 1, 0, 0);
-
-            PresentBackBuffer();
         }
     }
 
     return (int)msg.wParam;
+
+}
+
+void Prism::Update() {
+
+    mModel.SetConstantViewToHeap(mConstantBufferViewHeap, mConstantBuffer);
+
+    //回転用ラジアン
+    static float radian = 0;
+    radian += 0.01f;
+    //ワールドマトリックス
+    XMMATRIX world = XMMatrixRotationY(radian);
+    //ビューマトリックス
+    XMVECTOR eye = { 15.f, 0, 0.0f }, focus = { 0, 0, 0 }, up = { 0, 1, 0 };
+    XMMATRIX view = XMMatrixLookAtLH(eye, focus, up);
+    //プロジェクションマトリックス
+    XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, mAspect, 1.0f, 100.0f);
+    //コンスタントバッファ０更新
+    XMMATRIX worldViewProj = world * view * proj;
+
+    mModel.SetMat(worldViewProj);
+
+}
+
+void Prism::Render() {
+
+    CreatePipeLine();
+    
+    ClearBackBuffer();
+    
+    SetCommandList();
+    
+    PresentBackBuffer();
 
 }
 
@@ -224,11 +202,13 @@ bool Prism::InItConsole() {
 
 bool Prism::InitDx3D() {
        
-    UINT dxgiFactoryFlags = 0;
-    ComPtr<IDXGIFactory4> factory;
-    ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)));
 
-    if (!InitDevice(factory)) {
+    if (!InitFactory()) {
+        MessageBox(nullptr, L"Failed to initialize DXGI factory.", L"Error", MB_OK);
+		return false;
+    }
+
+    if (!InitDevice()) {
         MessageBox(nullptr, L"Failed to initialize device.", L"Error", MB_OK);
         return false;
 	}
@@ -243,7 +223,7 @@ bool Prism::InitDx3D() {
         return false;
     }
 
-    if (!InitBackBuffer(factory)) {
+    if (!InitFrameInterfaces()) {
         MessageBox(nullptr, L"Failed to initialize back buffer.", L"Error", MB_OK);
         return false;
 	}
@@ -253,15 +233,40 @@ bool Prism::InitDx3D() {
         return false;
 	}
 
+    if (!InitConstantBuffer()) {
+        MessageBox(nullptr, L"Failed to initialize constant buffer.", L"Error", MB_OK);
+		return false;
+    }
+
     return true;
 }
 
-bool Prism::InitDevice(ComPtr<IDXGIFactory4>& pFactory) {
+bool Prism::InitScenes() {
+
+    mModel = Model(mDevice, mCommandList);
+    mModel.LoadModel("assets\\cottage_fbx.fbx");
+
+    return true;
+
+}
+
+bool Prism::InitFactory() {
+
+
+    UINT dxgiFactoryFlags = 0;
+
+    ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&mFactory)));
+
+    return true;
+
+}
+
+bool Prism::InitDevice() {
 
     if (scmUseWarpDevice)
     {
         ComPtr<IDXGIAdapter> warpAdapter;
-        ThrowIfFailed(pFactory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)));
+        ThrowIfFailed(mFactory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)));
 
         ThrowIfFailed(D3D12CreateDevice(
             warpAdapter.Get(),
@@ -272,7 +277,7 @@ bool Prism::InitDevice(ComPtr<IDXGIFactory4>& pFactory) {
     else
     {
         ComPtr<IDXGIAdapter1> hardwareAdapter;
-        GetHardwareAdapter(pFactory.Get(), &hardwareAdapter);
+        GetHardwareAdapter(mFactory.Get(), &hardwareAdapter);
 
         ThrowIfFailed(D3D12CreateDevice(
             hardwareAdapter.Get(),
@@ -319,7 +324,30 @@ bool Prism::InitFence() {
     return true;
 }
 
-bool Prism::InitBackBuffer(ComPtr<IDXGIFactory4>& pFactory) {
+bool Prism::InitFrameInterfaces() {
+
+
+    if (!InitSwapChain()) {
+            MessageBox(nullptr, L"Failed to initialize swap chain.", L"Error", MB_OK);
+			return false;
+    }
+
+    if (!InitRenderTargetViewHeap()){
+        MessageBox(nullptr, L"Failed to initialize render target view heap.", L"Error", MB_OK);
+        return false;
+	}
+
+
+    if (!InitRenderTarget()) {
+        MessageBox(nullptr, L"Failed to initialize render target.", L"Error", MB_OK);
+		return false;
+    }
+
+    return true;
+
+}
+
+bool Prism::InitSwapChain() {
 
     // Describe and create the swap chain.
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
@@ -332,7 +360,7 @@ bool Prism::InitBackBuffer(ComPtr<IDXGIFactory4>& pFactory) {
     swapChainDesc.SampleDesc.Count = 1;
 
     ComPtr<IDXGISwapChain1> initSwapChain;
-    ThrowIfFailed(pFactory->CreateSwapChainForHwnd(
+    ThrowIfFailed(mFactory->CreateSwapChainForHwnd(
         mCommandQueue.Get(),		// Swap chain needs the queue so that it can force a flush on it.
         mHWindow,
         &swapChainDesc,
@@ -344,33 +372,71 @@ bool Prism::InitBackBuffer(ComPtr<IDXGIFactory4>& pFactory) {
     ThrowIfFailed(initSwapChain.As(&mSwapChain));
     mFrameIndex = mSwapChain->GetCurrentBackBufferIndex();
 
+    return true;
+}
+
+bool Prism::InitRenderTargetViewHeap() {
+
     // Create descriptor heaps.
+    
+    // Describe and create a render target view (RTV) descriptor heap.
+    D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+    rtvHeapDesc.NumDescriptors = scmFrameCount;
+    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    ThrowIfFailed(mDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&mBackBufferViewHeap)));
+
+    mBackBufferViewDescriptorSize = mDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+    return true;
+
+}
+
+bool Prism::InitRenderTarget() {
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(mBackBufferViewHeap->GetCPUDescriptorHandleForHeapStart());
+
+    // Create a RTV for each frame.
+    for (UINT n = 0; n < scmFrameCount; ++n)
     {
-        // Describe and create a render target view (RTV) descriptor heap.
-        D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-        rtvHeapDesc.NumDescriptors = scmFrameCount;
-        rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-        rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-        ThrowIfFailed(mDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&mBackBufferViewHeap)));
-
-        mBackBufferViewDescriptorSize = mDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    }
-
-    // Create frame resources.
-    {
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(mBackBufferViewHeap->GetCPUDescriptorHandleForHeapStart());
-
-        // Create a RTV for each frame.
-        for (UINT n = 0; n < scmFrameCount; ++n)
-        {
-            ThrowIfFailed(mSwapChain->GetBuffer(n, IID_PPV_ARGS(&mRenderTargets[n])));
-            mDevice->CreateRenderTargetView(mRenderTargets[n].Get(), nullptr, rtvHandle);
-            rtvHandle.Offset(1, mBackBufferViewDescriptorSize);
-        }
+        ThrowIfFailed(mSwapChain->GetBuffer(n, IID_PPV_ARGS(&mRenderTargets[n])));
+        mDevice->CreateRenderTargetView(mRenderTargets[n].Get(), nullptr, rtvHandle);
+        rtvHandle.Offset(1, mBackBufferViewDescriptorSize);
     }
 
     return true;
 
+}
+
+bool Prism::InitConstantBuffer() {
+    D3D12_HEAP_PROPERTIES prop = {};
+    prop.Type = D3D12_HEAP_TYPE_UPLOAD;
+    prop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    prop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+    prop.CreationNodeMask = 1;
+    prop.VisibleNodeMask = 1;
+    D3D12_RESOURCE_DESC desc = {};
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    desc.Alignment = 0;
+    desc.Width = 256;
+    desc.Height = 1;
+    desc.DepthOrArraySize = 1;
+    desc.MipLevels = 1;
+    desc.Format = DXGI_FORMAT_UNKNOWN;
+    desc.SampleDesc.Count = 1;
+    desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+    mDevice->CreateCommittedResource(
+        &prop,
+        D3D12_HEAP_FLAG_NONE,
+        &desc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&mConstantBuffer)
+    );
+
+    return true;
 }
 
 bool Prism::InitConstantBufferViewHeap() {
@@ -567,35 +633,27 @@ void Prism::WaitDrawDone() {
 
 }
 
-void Prism::CreateConstantBuffer() {
-    
+void Prism::SetCommandList(){
 
-    D3D12_HEAP_PROPERTIES prop = {};
-    prop.Type = D3D12_HEAP_TYPE_UPLOAD;
-    prop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    prop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    prop.CreationNodeMask = 1;
-    prop.VisibleNodeMask = 1;
-    D3D12_RESOURCE_DESC desc = {};
-    desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    desc.Alignment = 0;
-    desc.Width = 256;
-    desc.Height = 1;
-    desc.DepthOrArraySize = 1;
-    desc.MipLevels = 1;
-    desc.Format = DXGI_FORMAT_UNKNOWN;
-    desc.SampleDesc.Count = 1;
-    desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    mCommandList->SetPipelineState(mPipelineState.Get());
+    mCommandList->RSSetViewports(1, &mViewport);
+    mCommandList->RSSetScissorRects(1, &mScissorRect);
+    mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
-    mDevice->CreateCommittedResource(
-        &prop,
-        D3D12_HEAP_FLAG_NONE,
-        &desc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(&mConstantBuffer)
-    );
-    
+    D3D12_VERTEX_BUFFER_VIEW vertexBufViews[] = {
+        mModel.GetVertexBufferView(),
+    };
+
+    mCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    mCommandList->IASetVertexBuffers(0, _countof(vertexBufViews), vertexBufViews);
+
+    D3D12_INDEX_BUFFER_VIEW indexBufferView = mModel.GetIndexBufferView();
+    mCommandList->IASetIndexBuffer(&indexBufferView);
+    mCommandList->SetDescriptorHeaps(1, mConstantBufferViewHeap.GetAddressOf());
+
+    auto hCbvHeap = mConstantBufferViewHeap->GetGPUDescriptorHandleForHeapStart();
+    mCommandList->SetGraphicsRootDescriptorTable(0, hCbvHeap);
+
+    mCommandList->DrawIndexedInstanced(mModel.GetIndicesNum(), 1, 0, 0, 0);
 
 }

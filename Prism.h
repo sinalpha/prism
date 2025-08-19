@@ -41,15 +41,24 @@ public:
 
 private:
 
+	void Update();
+	void Render();
+
 	void GetHardwareAdapter(IDXGIFactory2*, IDXGIAdapter1**);
 
 	bool InitWindow();
 	bool InItConsole();
 	bool InitDx3D();
-	bool InitDevice(ComPtr<IDXGIFactory4>&);
+	bool InitScenes();
+	bool InitFactory();
+	bool InitDevice();
 	bool InitCommandInterfaces();
 	bool InitFence();
-	bool InitBackBuffer(ComPtr<IDXGIFactory4>&);
+	bool InitFrameInterfaces();
+	bool InitSwapChain();
+	bool InitRenderTargetViewHeap();
+	bool InitRenderTarget();
+	bool InitConstantBuffer();
 	bool InitConstantBufferViewHeap();
 
 	void CreatePipeLine();
@@ -57,7 +66,7 @@ private:
 	void ClearBackBuffer();
 	void PresentBackBuffer();
 	void WaitDrawDone();
-	void CreateConstantBuffer();
+	void SetCommandList();
 
 	static const UINT scmFrameCount{ 2 };
 	static const bool scmUseWarpDevice{ false };
@@ -79,6 +88,8 @@ private:
 	//device
 	ComPtr<ID3D12Device> mDevice;
 	
+	ComPtr<IDXGIFactory4> mFactory;
+
 	//command
 	ComPtr<ID3D12CommandAllocator> mCommandAllocator;
 	ComPtr<ID3D12CommandQueue> mCommandQueue;
@@ -109,5 +120,7 @@ private:
 	ComPtr<ID3D12DescriptorHeap> mConstantBufferViewHeap{ };
 	ComPtr<ID3D12Resource> mConstantBuffer{ };
 
+
+	Model mModel;
 
 };
