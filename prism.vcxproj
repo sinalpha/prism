@@ -123,47 +123,43 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\programming\prism\include\directx;D:\programming\prism\external\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\programming\prism\src\external\include;D:\programming\prism\src\include;D:\programming\prism\src\include\directx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\programming\prism\src\external\lib\assimp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="helper.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Material.cpp" />
-    <ClCompile Include="Model.cpp" />
-    <ClCompile Include="Prism.cpp" />
-    <ClCompile Include="ShaderReader.cpp" />
-    <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="src\helper.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Material.cpp" />
+    <ClCompile Include="src\Model.cpp" />
+    <ClCompile Include="src\Prism.cpp" />
+    <ClCompile Include="src\ShaderReader.cpp" />
+    <ClCompile Include="src\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="helper.h" />
-    <ClInclude Include="Material.h" />
-    <ClInclude Include="MathHelper.h" />
-    <ClInclude Include="Model.h" />
-    <ClInclude Include="Prism.h" />
-    <ClInclude Include="ShaderReader.h" />
-    <ClInclude Include="Texture.h" />
-    <ClInclude Include="Vertex.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="PixelShader.hlsl">
+    <FxCompile Include="src\shader\PixelShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="VertexShader.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-    </FxCompile>
+    <FxCompile Include="src\shader\VertexShader.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\include\helper.h" />
+    <ClInclude Include="src\include\Material.h" />
+    <ClInclude Include="src\include\MathHelper.h" />
+    <ClInclude Include="src\include\Model.h" />
+    <ClInclude Include="src\include\Prism.h" />
+    <ClInclude Include="src\include\ShaderReader.h" />
+    <ClInclude Include="src\include\Texture.h" />
+    <ClInclude Include="src\include\Vertex.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
