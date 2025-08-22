@@ -57,17 +57,12 @@ int Model::GetIndicesNum() {
 	return mNumIndices;
 }
 
-void Model::SetConstantViewToHeap(Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>& pConstantBufferViewHeap, Microsoft::WRL::ComPtr<ID3D12Resource>& mConstantBuffer) {
+ID3D12DescriptorHeap** Model::GetDescriptorHeapAddress() {
+	return mDescriptorHeap.GetAddressOf();
+}
 
-	mConstantBuffer->Map(0, nullptr, (void**)&mMappedBuffer);
-
-	auto hConstantBufferViewHeap = pConstantBufferViewHeap->GetCPUDescriptorHandleForHeapStart();
-
-	D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {};
-	desc.BufferLocation = mConstantBuffer->GetGPUVirtualAddress();
-	desc.SizeInBytes = static_cast<UINT>(mConstantBuffer->GetDesc().Width);
-	mDevice->CreateConstantBufferView(&desc, hConstantBufferViewHeap);
-
+Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>& Model::GetDescriptorHeap() {
+	return mDescriptorHeap;
 }
 
 void Model::InitFromScene(const aiScene* pScene, const std::string& pFileName) {
@@ -80,7 +75,9 @@ void Model::InitFromScene(const aiScene* pScene, const std::string& pFileName) {
 
 	PopulateVertexBuffer();
 	PopulateIndexBuffer();
-
+	CreateDescriptorHeap();
+	CreateConstantBuffer();
+	SetConstantViewToHeap();
 }
 
 void Model::CountVerticesAndIndices(const aiScene* pScene) {
@@ -213,5 +210,60 @@ void Model::PopulateIndexBuffer() {
 	mIndexBufferView.BufferLocation = mIndexBuffer->GetGPUVirtualAddress();
 	mIndexBufferView.SizeInBytes = indexBufferByteSize;
 	mIndexBufferView.Format = DXGI_FORMAT_R16_UINT;
+
+}
+
+void Model::CreateDescriptorHeap() {
+	D3D12_DESCRIPTOR_HEAP_DESC desc{};
+	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	desc.NumDescriptors = 1;
+	desc.NodeMask = 0;
+	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	mDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(mDescriptorHeap.GetAddressOf()));
+	
+	mDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+
+}
+
+void Model::CreateConstantBuffer() {
+	D3D12_HEAP_PROPERTIES prop = {};
+	prop.Type = D3D12_HEAP_TYPE_UPLOAD;
+	prop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	prop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+	prop.CreationNodeMask = 1;
+	prop.VisibleNodeMask = 1;
+	D3D12_RESOURCE_DESC desc = {};
+	desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	desc.Alignment = 0;
+	desc.Width = 256;
+	desc.Height = 1;
+	desc.DepthOrArraySize = 1;
+	desc.MipLevels = 1;
+	desc.Format = DXGI_FORMAT_UNKNOWN;
+	desc.SampleDesc.Count = 1;
+	desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+	mDevice->CreateCommittedResource(
+		&prop,
+		D3D12_HEAP_FLAG_NONE,
+		&desc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(mConstantBuffer.GetAddressOf())
+	);
+
+}
+
+void Model::SetConstantViewToHeap() {
+
+	mConstantBuffer->Map(0, nullptr, (void**)&mMappedBuffer);
+
+	auto hConstantBufferViewHeap = mDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {};
+	desc.BufferLocation = mConstantBuffer->GetGPUVirtualAddress();
+	desc.SizeInBytes = static_cast<UINT>(mConstantBuffer->GetDesc().Width);
+	mDevice->CreateConstantBufferView(&desc, hConstantBufferViewHeap);
 
 }

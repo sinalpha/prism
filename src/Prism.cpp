@@ -77,7 +77,7 @@ int Prism::Run() {
 
 void Prism::Update() {
 
-    mModel.SetConstantViewToHeap(mConstantBufferViewHeap, mConstantBuffer);
+    /*mModel.SetConstantViewToHeap(mConstantBufferViewHeap, mConstantBuffer);*/
 
     //回転用ラジアン
     static float radian = 0;
@@ -227,16 +227,6 @@ bool Prism::InitDx3D() {
         MessageBox(nullptr, L"Failed to initialize back buffer.", L"Error", MB_OK);
         return false;
 	}
-
-    if (!InitConstantBufferViewHeap()) {
-        MessageBox(nullptr, L"Failed to initialize constant buffer.", L"Error", MB_OK);
-        return false;
-	}
-
-    if (!InitConstantBuffer()) {
-        MessageBox(nullptr, L"Failed to initialize constant buffer.", L"Error", MB_OK);
-		return false;
-    }
 
     return true;
 }
@@ -406,50 +396,6 @@ bool Prism::InitRenderTarget() {
 
     return true;
 
-}
-
-bool Prism::InitConstantBuffer() {
-    D3D12_HEAP_PROPERTIES prop = {};
-    prop.Type = D3D12_HEAP_TYPE_UPLOAD;
-    prop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    prop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    prop.CreationNodeMask = 1;
-    prop.VisibleNodeMask = 1;
-    D3D12_RESOURCE_DESC desc = {};
-    desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    desc.Alignment = 0;
-    desc.Width = 256;
-    desc.Height = 1;
-    desc.DepthOrArraySize = 1;
-    desc.MipLevels = 1;
-    desc.Format = DXGI_FORMAT_UNKNOWN;
-    desc.SampleDesc.Count = 1;
-    desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-
-    mDevice->CreateCommittedResource(
-        &prop,
-        D3D12_HEAP_FLAG_NONE,
-        &desc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(&mConstantBuffer)
-    );
-
-    return true;
-}
-
-bool Prism::InitConstantBufferViewHeap() {
-
-    D3D12_DESCRIPTOR_HEAP_DESC desc{};
-    desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    desc.NumDescriptors = 1;
-    desc.NodeMask = 0;
-    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    mDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(mConstantBufferViewHeap.GetAddressOf()));
-
-
-    return true;
 }
 
 void Prism::CreatePipeLine() {
@@ -649,9 +595,10 @@ void Prism::SetCommandList(){
 
     D3D12_INDEX_BUFFER_VIEW indexBufferView = mModel.GetIndexBufferView();
     mCommandList->IASetIndexBuffer(&indexBufferView);
-    mCommandList->SetDescriptorHeaps(1, mConstantBufferViewHeap.GetAddressOf());
 
-    auto hCbvHeap = mConstantBufferViewHeap->GetGPUDescriptorHandleForHeapStart();
+    mCommandList->SetDescriptorHeaps(1, mModel.GetDescriptorHeapAddress());
+
+    auto hCbvHeap = mModel.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart();
     mCommandList->SetGraphicsRootDescriptorTable(0, hCbvHeap);
 
     mCommandList->DrawIndexedInstanced(mModel.GetIndicesNum(), 1, 0, 0, 0);

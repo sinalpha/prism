@@ -39,8 +39,8 @@ public:
 	D3D12_INDEX_BUFFER_VIEW GetIndexBufferView();
 	int GetVerticesNum();
 	int GetIndicesNum();
-	void SetConstantViewToHeap(Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>&, Microsoft::WRL::ComPtr<ID3D12Resource>&);
-
+	ID3D12DescriptorHeap** GetDescriptorHeapAddress();
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>& GetDescriptorHeap();
 
 
 private:
@@ -61,6 +61,9 @@ private:
 	void InitSingleMesh(const aiMesh*);
 	void PopulateVertexBuffer();
 	void PopulateIndexBuffer();
+	void CreateDescriptorHeap();
+	void CreateConstantBuffer();
+	void SetConstantViewToHeap();
 
 	Microsoft::WRL::ComPtr<ID3D12Device> mDevice{ nullptr };
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList{ nullptr };
@@ -81,5 +84,6 @@ private:
 	DirectX::XMFLOAT4X4 mWorld{ MathHelper::Identity4x4() };
 
 	ConstantBuffer* mMappedBuffer{ 0 };
-
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mDescriptorHeap{ };
+	Microsoft::WRL::ComPtr<ID3D12Resource> mConstantBuffer{ };
 };

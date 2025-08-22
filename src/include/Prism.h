@@ -58,8 +58,6 @@ private:
 	bool InitSwapChain();
 	bool InitRenderTargetViewHeap();
 	bool InitRenderTarget();
-	bool InitConstantBuffer();
-	bool InitConstantBufferViewHeap();
 
 	void CreatePipeLine();
 
@@ -116,10 +114,6 @@ private:
 	UINT mFrameIndex{ 0 };
 	ComPtr<ID3D12DescriptorHeap> mBackBufferViewHeap;
 	UINT mBackBufferViewDescriptorSize{ 0 };
-
-	ComPtr<ID3D12DescriptorHeap> mConstantBufferViewHeap{ };
-	ComPtr<ID3D12Resource> mConstantBuffer{ };
-
 
 	Model mModel;
 
