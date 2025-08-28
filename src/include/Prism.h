@@ -28,12 +28,11 @@ class Prism {
 public:
 
 
-	Prism(HINSTANCE);
 	Prism(const Prism&) = delete;
 	Prism& operator=(const Prism&) = delete;
 	~Prism();
 
-	bool Initialize();
+	bool Initialize(HINSTANCE);
 
 
 	int Run();
@@ -70,7 +69,7 @@ private:
 	static const bool scmUseWarpDevice{ false };
 
 
-	WindowController mWindowManager;
+	WindowController mWindowController;
 
 	//Direct3D 12 member variables
 	ComPtr<ID3D12Device> mDevice;	
