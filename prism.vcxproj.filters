@@ -59,6 +59,9 @@
     <ClCompile Include="src\external\include\imgui\backends\imgui_impl_win32.cpp">
       <Filter>ImGUI</Filter>
     </ClCompile>
+    <ClCompile Include="src\WindowManager.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\shader\VertexShader.hlsl">
@@ -116,6 +119,9 @@
     </ClInclude>
     <ClInclude Include="src\external\include\imgui\backends\imgui_impl_win32.h">
       <Filter>ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\include\WindowManager.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

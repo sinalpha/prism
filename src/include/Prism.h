@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <memory> 
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -15,6 +16,7 @@
 
 #include <Windows.h>
 
+#include "WindowManager.h"
 #include "ShaderReader.h"
 #include "helper.h"
 #include "Model.h"
@@ -32,7 +34,7 @@ public:
 	~Prism();
 
 	bool Initialize();
-	static LRESULT MsgProc(HWND, UINT, WPARAM, LPARAM);
+
 
 	int Run();
 
@@ -43,7 +45,6 @@ private:
 
 	void GetHardwareAdapter(IDXGIFactory2*, IDXGIAdapter1**);
 
-	bool InitWindow();
 	bool InItConsole();
 	bool InitDx3D();
 	bool InitScenes();
@@ -68,18 +69,8 @@ private:
 	static const UINT scmFrameCount{ 2 };
 	static const bool scmUseWarpDevice{ false };
 
-	//WIN32 API member variables
-	HINSTANCE mHInstance{ NULL };
-	WNDCLASSEX mWindowClass{ NULL };
-	HWND mHWindow{ NULL };
-	LPCWSTR	mWindowTitle{ L"prism" };
-	int mClientWidth{ 1280 };
-	int mClientHeight{ 720 };
-	int mDisplayWidth{ GetSystemMetrics(SM_CXSCREEN) };
-	int mDisplayHeight{ GetSystemMetrics(SM_CYSCREEN) };
-	int mClientLeft{ (mDisplayWidth - mClientWidth) / 2 };
-	int mClientTop{ (mDisplayHeight - mClientHeight) / 2 };
-	float mAspect{ static_cast<float> (mClientWidth / static_cast<float>(mClientHeight)) };
+
+	std::unique_ptr<WindowManager> mWindow;
 
 	//Direct3D 12 member variables
 	ComPtr<ID3D12Device> mDevice;	
