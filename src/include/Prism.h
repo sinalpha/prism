@@ -70,7 +70,7 @@ private:
 	static const bool scmUseWarpDevice{ false };
 
 
-	std::unique_ptr<WindowManager> mWindow;
+	WindowManager mWindowManager;
 
 	//Direct3D 12 member variables
 	ComPtr<ID3D12Device> mDevice;	

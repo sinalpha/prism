@@ -1,7 +1,7 @@
 ﻿#include "Prism.h"
 
 Prism::Prism(HINSTANCE pHInstance) {
-	mWindow = std::make_unique<WindowManager>(pHInstance);
+	mWindowManager.Init(pHInstance);
 }
 
 Prism::~Prism() {
@@ -28,8 +28,6 @@ bool Prism::Initialize() {
 	return true;
     
 }
-
-
 
 int Prism::Run() {
 
@@ -69,7 +67,7 @@ void Prism::Update() {
     XMVECTOR eye = { 15.f, 0, 0.0f }, focus = { 0, 0, 0 }, up = { 0, 1, 0 };
     XMMATRIX view = XMMatrixLookAtLH(eye, focus, up);
     //プロジェクションマトリックス
-    XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, mWindow->GetAspect(), 1.0f, 100.0f);
+    XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, mWindowManager.GetAspect(), 1.0f, 100.0f);
     //コンスタントバッファ０更新
     XMMATRIX worldViewProj = world * view * proj;
 
@@ -267,8 +265,8 @@ bool Prism::InitSwapChain() {
     // Describe and create the swap chain.
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.BufferCount = scmFrameCount;
-    swapChainDesc.Width = mWindow->GetClientWidth();
-    swapChainDesc.Height = mWindow->GetClientHeight();
+    swapChainDesc.Width = mWindowManager.GetClientWidth();
+    swapChainDesc.Height = mWindowManager.GetClientHeight();
     swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
@@ -277,7 +275,7 @@ bool Prism::InitSwapChain() {
     ComPtr<IDXGISwapChain1> initSwapChain;
     ThrowIfFailed(mFactory->CreateSwapChainForHwnd(
         mCommandQueue.Get(),		// Swap chain needs the queue so that it can force a flush on it.
-        mWindow->GetWindowHandler(),
+        mWindowManager.GetWindowHandler(),
         &swapChainDesc,
         nullptr,
         nullptr,
@@ -428,8 +426,8 @@ void Prism::CreatePipeLine() {
 void Prism::SetViewPort() {
     mViewport.TopLeftX = 0.0f;
     mViewport.TopLeftY = 0.0f;
-    mViewport.Width = (FLOAT)mWindow->GetClientWidth();
-    mViewport.Height = (FLOAT)mWindow->GetClientHeight();
+    mViewport.Width = (FLOAT)mWindowManager.GetClientWidth();
+    mViewport.Height = (FLOAT)mWindowManager.GetClientHeight();
     mViewport.MinDepth = 0.0f;
     mViewport.MaxDepth = 1.0f;
 }
@@ -437,8 +435,8 @@ void Prism::SetViewPort() {
 void Prism::SetScissorRect() {
     mScissorRect.left = 0;
     mScissorRect.top = 0;
-    mScissorRect.right = mWindow->GetClientWidth();
-    mScissorRect.bottom = mWindow->GetClientHeight();
+    mScissorRect.right = mWindowManager.GetClientWidth();
+    mScissorRect.bottom = mWindowManager.GetClientHeight();
 }
 
 void Prism::ClearBackBuffer() {

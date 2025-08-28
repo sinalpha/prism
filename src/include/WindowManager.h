@@ -7,11 +7,12 @@
 class WindowManager {
 public:
 
-	WindowManager() = delete;
+	WindowManager() = default;
 	~WindowManager() = default;
 
-	WindowManager(HINSTANCE);
 	static LRESULT MsgProc(HWND, UINT, WPARAM, LPARAM);
+
+	void Init(HINSTANCE);
 
 	int GetClientWidth();
 	int GetClientHeight();

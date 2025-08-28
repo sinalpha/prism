@@ -1,6 +1,6 @@
 #include "WindowManager.h"
 
-WindowManager::WindowManager(HINSTANCE hInstance) {
+void WindowManager::Init(HINSTANCE pH) {
 
     bool result;
 
@@ -16,7 +16,6 @@ WindowManager::WindowManager(HINSTANCE hInstance) {
     mWindowClass.cbSize = sizeof(WNDCLASSEX);
 
     result = RegisterClassEx(&mWindowClass);
-    assert(result);
 
     // Calculate the window size based on the client area size
     RECT windowRect = { 0, 0, mClientWidth, mClientHeight };
@@ -44,7 +43,6 @@ WindowManager::WindowManager(HINSTANCE hInstance) {
 
     ShowWindow(mHWindow, SW_SHOW);
     UpdateWindow(mHWindow);
-
 
 }
 
