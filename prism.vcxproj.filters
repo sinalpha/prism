@@ -62,6 +62,9 @@
     <ClCompile Include="src\WindowManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="src\D3DManager.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\shader\VertexShader.hlsl">
@@ -121,6 +124,9 @@
       <Filter>ImGUI</Filter>
     </ClInclude>
     <ClInclude Include="src\include\WindowManager.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="src\include\D3DManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
