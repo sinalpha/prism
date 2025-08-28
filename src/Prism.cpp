@@ -1,9 +1,5 @@
 ﻿#include "Prism.h"
 
-Prism::~Prism() {
-
-}
-
 bool Prism::Initialize(HINSTANCE pHInstance) {
 
     mWindowController.Init(pHInstance);

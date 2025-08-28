@@ -31,7 +31,7 @@ public:
 	Prism() = default;
 	Prism(const Prism&) = delete;
 	Prism& operator=(const Prism&) = delete;
-	~Prism();
+	~Prism() = default;
 
 	bool Initialize(HINSTANCE);
 
