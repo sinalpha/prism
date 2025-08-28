@@ -1,8 +1,6 @@
-#include "ConsoleManager.h"
+#include "ConsoleController.h"
 
-void ConsoleManager::Init(Prism* pPrism) {
-
-    mPrism = pPrism;
+void ConsoleController::Init() {
 
     AllocConsole();
 

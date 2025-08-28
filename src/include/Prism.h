@@ -17,6 +17,7 @@
 #include <Windows.h>
 
 #include "WindowController.h"
+#include "ConsoleController.h"
 #include "ShaderReader.h"
 #include "helper.h"
 #include "Model.h"
@@ -27,7 +28,7 @@ using Microsoft::WRL::ComPtr;
 class Prism {
 public:
 
-
+	Prism() = default;
 	Prism(const Prism&) = delete;
 	Prism& operator=(const Prism&) = delete;
 	~Prism();
@@ -70,6 +71,7 @@ private:
 
 
 	WindowController mWindowController;
+	ConsoleController mConsoleController;
 
 	//Direct3D 12 member variables
 	ComPtr<ID3D12Device> mDevice;	

@@ -9,9 +9,9 @@ int WINAPI WinMain(
 	_In_ int showCmd)
 {
 
-	Prism prism{ hInstance };
+	Prism prism;
 
-	if (!prism.Initialize())
+	if (!prism.Initialize(hInstance))
 		return 0;
 
 	return prism.Run();

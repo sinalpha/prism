@@ -4,12 +4,9 @@
 
 #include <Windows.h>
 
-#include "Manager.h"
 
-class ConsoleManager : public Manager {
+class ConsoleController{
 public:
-
-	ConsoleManager(Prism*);
 
 	void Init();
 

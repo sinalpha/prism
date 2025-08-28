@@ -7,11 +7,7 @@ Prism::~Prism() {
 bool Prism::Initialize(HINSTANCE pHInstance) {
 
     mWindowController.Init(pHInstance);
-    
-    if (!InItConsole()) {
-        MessageBox(nullptr, L"Failed to initialize console.", L"Error", MB_OK);
-		return false;
-    }
+    mConsoleController.Init();
 
 
     if (!InitDx3D()) {
