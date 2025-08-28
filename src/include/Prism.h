@@ -1,18 +1,12 @@
 #pragma once
 
-#include <stdio.h>
-#include <iostream>
-#include <memory> 
-
 #include <Windows.h>
 
 #include "WindowController.h"
 #include "ConsoleController.h"
 #include "D3DController.h"
 #include "SceneManager.h"
-#include "ShaderReader.h"
-#include "helper.h"
-#include "Model.h"
+
 
 
 class Prism {

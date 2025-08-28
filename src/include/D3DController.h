@@ -10,6 +10,8 @@
 #include <DirectXMath.h>
 #include <d3dx12.h>
 
+#include "ShaderReader.h"
+#include "helper.h"
 
 class Prism;
 class D3DController {
