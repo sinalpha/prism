@@ -1,5 +1,9 @@
 #pragma once
 
+#pragma comment(lib, "d3d12.lib")
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "d3dcompiler.lib") 
+
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <D3Dcompiler.h>
@@ -7,14 +11,19 @@
 #include <d3dx12.h>
 
 
-
+class Prism;
 class D3DController {
 public:
 
-	void Init();
+	void Init(Prism*);
 	void Render();
 
+	inline Microsoft::WRL::ComPtr<ID3D12Device>& GetDevice() { return mDevice; }
+	inline Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>& GetCommandList() { return mCommandList; }
+
 private:
+
+	Prism* mPrism{ nullptr };
 
 	void GetHardwareAdapter(IDXGIFactory2*, IDXGIAdapter1**);
 
