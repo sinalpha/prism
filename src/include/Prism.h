@@ -26,10 +26,10 @@ public:
 	bool Initialize(HINSTANCE);
 	int Run();
 
-	WindowController& GetWindowController() { return mWindowController; };
-	ConsoleController& GetConsoleController() { return mConsoleController; };
-	D3DController& GetD3DController() { return mD3DController; };
-	SceneManager& GetSceneManager() { return mSceneManager; };
+	inline WindowController& GetWindowController() { return mWindowController; };
+	inline ConsoleController& GetConsoleController() { return mConsoleController; };
+	inline D3DController& GetD3DController() { return mD3DController; };
+	inline SceneManager& GetSceneManager() { return mSceneManager; };
 
 private:
 
