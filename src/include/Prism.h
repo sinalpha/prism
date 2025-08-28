@@ -45,7 +45,6 @@ private:
 
 	void GetHardwareAdapter(IDXGIFactory2*, IDXGIAdapter1**);
 
-	bool InItConsole();
 	bool InitDx3D();
 	bool InitScenes();
 	bool InitFactory();

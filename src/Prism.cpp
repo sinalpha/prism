@@ -102,18 +102,6 @@ void Prism::GetHardwareAdapter(IDXGIFactory2* pFactory, IDXGIAdapter1** ppAdapte
     *ppAdapter = adapter.Detach();
 }
 
-bool Prism::InItConsole() {
-
-    AllocConsole();
-    
-    freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
-    freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
-    freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
-
-    return true;
-
-}
-
 bool Prism::InitDx3D() {
        
 
