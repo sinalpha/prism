@@ -4,7 +4,7 @@ bool Prism::Initialize(HINSTANCE pHInstance) {
 
     mWindowController.Init(pHInstance);
     mConsoleController.Init();
-
+	mD3DController.Init();
 
     if (!InitDx3D()) {
         MessageBox(nullptr, L"Failed to initialize Direct3D 12.", L"Error", MB_OK);

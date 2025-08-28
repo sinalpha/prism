@@ -135,7 +135,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\ConsoleController.cpp" />
-    <ClCompile Include="src\D3DManager.cpp" />
+    <ClCompile Include="src\D3DController.cpp" />
     <ClCompile Include="src\external\include\imgui\backends\imgui_impl_dx12.cpp" />
     <ClCompile Include="src\external\include\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="src\external\include\imgui\imgui.cpp" />
@@ -173,7 +173,7 @@
     <ClInclude Include="src\external\include\imgui\imstb_textedit.h" />
     <ClInclude Include="src\external\include\imgui\imstb_truetype.h" />
     <ClInclude Include="src\include\ConsoleController.h" />
-    <ClInclude Include="src\include\D3DManager.h" />
+    <ClInclude Include="src\include\D3DController.h" />
     <ClInclude Include="src\include\helper.h" />
     <ClInclude Include="src\include\Material.h" />
     <ClInclude Include="src\include\MathHelper.h" />

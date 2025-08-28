@@ -18,6 +18,7 @@
 
 #include "WindowController.h"
 #include "ConsoleController.h"
+#include "D3DController.h"
 #include "ShaderReader.h"
 #include "helper.h"
 #include "Model.h"
@@ -71,6 +72,7 @@ private:
 
 	WindowController mWindowController;
 	ConsoleController mConsoleController;
+	D3DController mD3DController;
 
 	//Direct3D 12 member variables
 	ComPtr<ID3D12Device> mDevice;	
