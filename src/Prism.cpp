@@ -77,8 +77,6 @@ int Prism::Run() {
 
 void Prism::Update() {
 
-    /*mModel.SetConstantViewToHeap(mConstantBufferViewHeap, mConstantBuffer);*/
-
     //回転用ラジアン
     static float radian = 0;
     radian += 0.01f;
@@ -99,12 +97,8 @@ void Prism::Update() {
 void Prism::Render() {
 
     CreatePipeLine();
-    
-    ClearBackBuffer();
-    
+
     SetCommandList();
-    
-    PresentBackBuffer();
 
 }
 
@@ -400,7 +394,7 @@ bool Prism::InitRenderTarget() {
 
 void Prism::CreatePipeLine() {
     
- 
+    //루트 시그네이처 설정
     D3D12_DESCRIPTOR_RANGE  range[1] = {};
     UINT b0 = 0;
     range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
@@ -428,18 +422,17 @@ void Prism::CreatePipeLine() {
     assert(SUCCEEDED(Hr));
     blob->Release();
  
-
+    //쉐이더 읽기
     ShaderReader vs("assets\\VertexShader.cso");
     assert(vs.succeeded());
     ShaderReader ps("assets\\PixelShader.cso");
     assert(ps.succeeded());
-
-
     UINT slot0 = 0;
     D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, slot0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     };
 
+    //레스터 라이저 설정
     D3D12_RASTERIZER_DESC rasterDesc = {};
     rasterDesc.FrontCounterClockwise = false;
     rasterDesc.CullMode = D3D12_CULL_MODE_NONE;
@@ -453,6 +446,7 @@ void Prism::CreatePipeLine() {
     rasterDesc.ForcedSampleCount = 0;
     rasterDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
+    //블렌드 스테이트 설정
     D3D12_BLEND_DESC blendDesc = {};
     blendDesc.AlphaToCoverageEnable = false;
     blendDesc.IndependentBlendEnable = false;
@@ -467,14 +461,14 @@ void Prism::CreatePipeLine() {
     blendDesc.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
     blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
+	//깊이버퍼 설정
     D3D12_DEPTH_STENCIL_DESC depthStencilDesc = {};
     depthStencilDesc.DepthEnable = false;
     depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
     depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
     depthStencilDesc.StencilEnable = false;
 
-
-
+	//파이프라인 설정
     D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineDesc = {};
     pipelineDesc.pRootSignature = mRootSignature.Get();
     pipelineDesc.VS = { vs.code(), vs.size() };
@@ -495,14 +489,21 @@ void Prism::CreatePipeLine() {
     );
 
 
+	SetViewPort();
+	SetScissorRect();
+
+}
+
+void Prism::SetViewPort() {
     mViewport.TopLeftX = 0.0f;
     mViewport.TopLeftY = 0.0f;
     mViewport.Width = (FLOAT)mClientWidth;
     mViewport.Height = (FLOAT)mClientHeight;
     mViewport.MinDepth = 0.0f;
     mViewport.MaxDepth = 1.0f;
+}
 
-
+void Prism::SetScissorRect() {
     mScissorRect.left = 0;
     mScissorRect.top = 0;
     mScissorRect.right = mClientWidth;
@@ -581,26 +582,26 @@ void Prism::WaitDrawDone() {
 
 void Prism::SetCommandList(){
 
+    ClearBackBuffer();
+
+
     mCommandList->SetPipelineState(mPipelineState.Get());
     mCommandList->RSSetViewports(1, &mViewport);
     mCommandList->RSSetScissorRects(1, &mScissorRect);
     mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
-
+    mCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     D3D12_VERTEX_BUFFER_VIEW vertexBufViews[] = {
         mModel.GetVertexBufferView(),
     };
-
-    mCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     mCommandList->IASetVertexBuffers(0, _countof(vertexBufViews), vertexBufViews);
-
     D3D12_INDEX_BUFFER_VIEW indexBufferView = mModel.GetIndexBufferView();
     mCommandList->IASetIndexBuffer(&indexBufferView);
-
     mCommandList->SetDescriptorHeaps(1, mModel.GetDescriptorHeapAddress());
-
     auto hCbvHeap = mModel.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart();
     mCommandList->SetGraphicsRootDescriptorTable(0, hCbvHeap);
-
     mCommandList->DrawIndexedInstanced(mModel.GetIndicesNum(), 1, 0, 0, 0);
+
+
+    PresentBackBuffer();
 
 }

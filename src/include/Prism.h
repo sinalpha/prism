@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Windows.h>
 #include <stdio.h>
 #include <iostream>
 
@@ -12,7 +11,9 @@
 #include <dxgi1_6.h>
 #include <D3Dcompiler.h>
 #include <DirectXMath.h>
-#include "d3dx12.h"
+#include <d3dx12.h>
+
+#include <Windows.h>
 
 #include "ShaderReader.h"
 #include "helper.h"
@@ -20,7 +21,6 @@
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
-
 
 class Prism {
 public:
@@ -31,13 +31,10 @@ public:
 	Prism& operator=(const Prism&) = delete;
 	~Prism();
 
-
 	bool Initialize();
 	static LRESULT MsgProc(HWND, UINT, WPARAM, LPARAM);
 
-
 	int Run();
-
 
 private:
 
@@ -60,6 +57,8 @@ private:
 	bool InitRenderTarget();
 
 	void CreatePipeLine();
+	void SetViewPort();
+	void SetScissorRect();
 
 	void ClearBackBuffer();
 	void PresentBackBuffer();
@@ -69,7 +68,7 @@ private:
 	static const UINT scmFrameCount{ 2 };
 	static const bool scmUseWarpDevice{ false };
 
-	// variable for setting window;
+	//WIN32 API member variables
 	HINSTANCE mHInstance{ NULL };
 	WNDCLASSEX mWindowClass{ NULL };
 	HWND mHWindow{ NULL };
@@ -82,13 +81,10 @@ private:
 	int mClientTop{ (mDisplayHeight - mClientHeight) / 2 };
 	float mAspect{ static_cast<float> (mClientWidth / static_cast<float>(mClientHeight)) };
 
-	// Pipeline objects.
-	//device
-	ComPtr<ID3D12Device> mDevice;
-	
+	//Direct3D 12 member variables
+	ComPtr<ID3D12Device> mDevice;	
 	ComPtr<IDXGIFactory4> mFactory;
 
-	//command
 	ComPtr<ID3D12CommandAllocator> mCommandAllocator;
 	ComPtr<ID3D12CommandQueue> mCommandQueue;
 	ComPtr<ID3D12GraphicsCommandList> mCommandList;
@@ -98,23 +94,19 @@ private:
 	CD3DX12_VIEWPORT mViewport;
 	CD3DX12_RECT mScissorRect;
 
-	// Synchronization objects.
-	//fence
 	ComPtr<ID3D12Fence> mFence;
 	HANDLE mFenceEvent{ NULL };
 	UINT64 mFenceValue{ 0 };
 
-	//debug
 	HRESULT mHr{ 0 };
 
-	//resources
-	//back buffer
 	ComPtr<ID3D12Resource> mRenderTargets[scmFrameCount];
 	ComPtr<IDXGISwapChain4> mSwapChain;
 	UINT mFrameIndex{ 0 };
 	ComPtr<ID3D12DescriptorHeap> mBackBufferViewHeap;
 	UINT mBackBufferViewDescriptorSize{ 0 };
 
+	//Objects to render
 	Model mModel;
 
 };

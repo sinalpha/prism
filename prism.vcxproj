@@ -123,7 +123,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\programming\prism\src\external\include;D:\programming\prism\src\include;D:\programming\prism\src\include\directx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\programming\prism\src\external\include\imgui\backends;D:\programming\prism\src\external\include\imgui;D:\programming\prism\src\external\include;D:\programming\prism\src\include;D:\programming\prism\src\include\directx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -134,6 +134,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\external\include\imgui\backends\imgui_impl_dx12.cpp" />
+    <ClCompile Include="src\external\include\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="src\external\include\imgui\imgui.cpp" />
+    <ClCompile Include="src\external\include\imgui\imgui_demo.cpp" />
+    <ClCompile Include="src\external\include\imgui\imgui_draw.cpp" />
+    <ClCompile Include="src\external\include\imgui\imgui_tables.cpp" />
+    <ClCompile Include="src\external\include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\helper.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Material.cpp" />
@@ -152,6 +159,14 @@
     <FxCompile Include="src\shader\VertexShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\external\include\imgui\backends\imgui_impl_dx12.h" />
+    <ClInclude Include="src\external\include\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="src\external\include\imgui\imconfig.h" />
+    <ClInclude Include="src\external\include\imgui\imgui.h" />
+    <ClInclude Include="src\external\include\imgui\imgui_internal.h" />
+    <ClInclude Include="src\external\include\imgui\imstb_rectpack.h" />
+    <ClInclude Include="src\external\include\imgui\imstb_textedit.h" />
+    <ClInclude Include="src\external\include\imgui\imstb_truetype.h" />
     <ClInclude Include="src\include\helper.h" />
     <ClInclude Include="src\include\Material.h" />
     <ClInclude Include="src\include\MathHelper.h" />
