@@ -1,6 +1,6 @@
-#include "WindowManager.h"
+#include "WindowController.h"
 
-void WindowManager::Init(HINSTANCE pH) {
+void WindowController::Init(HINSTANCE pH) {
 
     bool result;
 
@@ -46,7 +46,7 @@ void WindowManager::Init(HINSTANCE pH) {
 
 }
 
-LRESULT WindowManager::MsgProc(HWND pHwnd, UINT pMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT WindowController::MsgProc(HWND pHwnd, UINT pMsg, WPARAM wParam, LPARAM lParam) {
 
 
     switch (pMsg) {
@@ -60,18 +60,18 @@ LRESULT WindowManager::MsgProc(HWND pHwnd, UINT pMsg, WPARAM wParam, LPARAM lPar
 
 }
 
-int WindowManager::GetClientWidth(){
+int WindowController::GetClientWidth(){
     return mClientWidth;
 };
 
-int WindowManager::GetClientHeight(){
+int WindowController::GetClientHeight(){
 	return mClientHeight;
 };
 
-float WindowManager::GetAspect() {
+float WindowController::GetAspect() {
     return mAspect; 
 }
 
-HWND WindowManager::GetWindowHandler(){
+HWND WindowController::GetWindowHandler(){
 	return mHWindow;
 }

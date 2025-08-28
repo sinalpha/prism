@@ -149,7 +149,7 @@
     <ClCompile Include="src\Prism.cpp" />
     <ClCompile Include="src\ShaderReader.cpp" />
     <ClCompile Include="src\Texture.cpp" />
-    <ClCompile Include="src\WindowManager.cpp" />
+    <ClCompile Include="src\WindowController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\shader\PixelShader.hlsl">
@@ -178,7 +178,7 @@
     <ClInclude Include="src\include\ShaderReader.h" />
     <ClInclude Include="src\include\Texture.h" />
     <ClInclude Include="src\include\Vertex.h" />
-    <ClInclude Include="src\include\WindowManager.h" />
+    <ClInclude Include="src\include\WindowController.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

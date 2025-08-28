@@ -16,7 +16,7 @@
 
 #include <Windows.h>
 
-#include "WindowManager.h"
+#include "WindowController.h"
 #include "ShaderReader.h"
 #include "helper.h"
 #include "Model.h"
@@ -70,7 +70,7 @@ private:
 	static const bool scmUseWarpDevice{ false };
 
 
-	WindowManager mWindowManager;
+	WindowController mWindowManager;
 
 	//Direct3D 12 member variables
 	ComPtr<ID3D12Device> mDevice;	

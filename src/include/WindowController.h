@@ -4,11 +4,11 @@
 
 #include <Windows.h>
 
-class WindowManager {
+class WindowController {
 public:
 
-	WindowManager() = default;
-	~WindowManager() = default;
+	WindowController() = default;
+	~WindowController() = default;
 
 	static LRESULT MsgProc(HWND, UINT, WPARAM, LPARAM);
 
