@@ -15,6 +15,9 @@
     <Filter Include="ImGUI">
       <UniqueIdentifier>{9af25734-2689-464c-9f7e-c79a83336437}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Manager&amp;Controller">
+      <UniqueIdentifier>{32591bd9-2de9-4dd4-99a8-37c4707b5462}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\helper.cpp">
@@ -59,11 +62,20 @@
     <ClCompile Include="src\external\include\imgui\backends\imgui_impl_win32.cpp">
       <Filter>ImGUI</Filter>
     </ClCompile>
-    <ClCompile Include="src\WindowManager.cpp">
-      <Filter>소스 파일</Filter>
+    <ClCompile Include="src\ConsoleController.cpp">
+      <Filter>Manager&amp;Controller</Filter>
     </ClCompile>
-    <ClCompile Include="src\D3DManager.cpp">
-      <Filter>소스 파일</Filter>
+    <ClCompile Include="src\D3DController.cpp">
+      <Filter>Manager&amp;Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ModelManager.cpp">
+      <Filter>Manager&amp;Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SceneManager.cpp">
+      <Filter>Manager&amp;Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WindowController.cpp">
+      <Filter>Manager&amp;Controller</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -123,11 +135,20 @@
     <ClInclude Include="src\external\include\imgui\backends\imgui_impl_win32.h">
       <Filter>ImGUI</Filter>
     </ClInclude>
-    <ClInclude Include="src\include\WindowManager.h">
-      <Filter>헤더 파일</Filter>
+    <ClInclude Include="src\include\ConsoleController.h">
+      <Filter>Manager&amp;Controller</Filter>
     </ClInclude>
-    <ClInclude Include="src\include\D3DManager.h">
-      <Filter>헤더 파일</Filter>
+    <ClInclude Include="src\include\D3DController.h">
+      <Filter>Manager&amp;Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="src\include\ModelManager.h">
+      <Filter>Manager&amp;Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="src\include\SceneManager.h">
+      <Filter>Manager&amp;Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="src\include\WindowController.h">
+      <Filter>Manager&amp;Controller</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
