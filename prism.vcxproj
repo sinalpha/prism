@@ -149,7 +149,7 @@
     <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\ModelManager.cpp" />
     <ClCompile Include="src\Prism.cpp" />
-    <ClCompile Include="src\SceneManager.cpp" />
+    <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\ShaderReader.cpp" />
     <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\WindowController.cpp" />
@@ -180,7 +180,7 @@
     <ClInclude Include="src\include\Model.h" />
     <ClInclude Include="src\include\ModelManager.h" />
     <ClInclude Include="src\include\Prism.h" />
-    <ClInclude Include="src\include\SceneManager.h" />
+    <ClInclude Include="src\include\Scene.h" />
     <ClInclude Include="src\include\ShaderReader.h" />
     <ClInclude Include="src\include\Texture.h" />
     <ClInclude Include="src\include\Vertex.h" />

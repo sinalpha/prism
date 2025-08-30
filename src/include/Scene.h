@@ -1,19 +1,18 @@
 #pragma once
 #include "Model.h"
 
-#include "PrismBase.h"
-
+class Prism;
 class Scene {
 public:
 
-	void Init(PrismBase*);
+	void Init(Prism*);
 	void Update();
 
 	inline Model& GetModel() { return mModel; };
 
 private:
 
-	PrismBase* mPrism;
+	Prism* mPrism{ nullptr };
 
 	Model mModel;
 

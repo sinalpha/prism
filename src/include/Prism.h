@@ -5,7 +5,7 @@
 #include "WindowController.h"
 #include "ConsoleController.h"
 #include "D3DController.h"
-#include "SceneManager.h"
+#include "Scene.h"
 
 
 
@@ -23,14 +23,15 @@ public:
 	inline WindowController& GetWindowController() { return mWindowController; };
 	inline ConsoleController& GetConsoleController() { return mConsoleController; };
 	inline D3DController& GetD3DController() { return mD3DController; };
-	inline SceneManager& GetSceneManager() { return mSceneManager; };
+	inline Scene* GetCurrentScene() { return mCurrentScene; };
 
 private:
 
 	WindowController mWindowController;
 	ConsoleController mConsoleController;
 	D3DController mD3DController;
-	SceneManager mSceneManager;
+	
+	Scene* mCurrentScene;
 
 
 };

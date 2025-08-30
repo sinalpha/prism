@@ -407,15 +407,15 @@ void D3DController::SetCommandList() {
     mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
     mCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     D3D12_VERTEX_BUFFER_VIEW vertexBufViews[] = {
-        mPrism->GetSceneManager().GetModel().GetVertexBufferView(),
+        mPrism->GetCurrentScene()->GetModel().GetVertexBufferView(),
     };
     mCommandList->IASetVertexBuffers(0, _countof(vertexBufViews), vertexBufViews);
-    D3D12_INDEX_BUFFER_VIEW indexBufferView = mPrism->GetSceneManager().GetModel().GetIndexBufferView();
+    D3D12_INDEX_BUFFER_VIEW indexBufferView = mPrism->GetCurrentScene()->GetModel().GetIndexBufferView();
     mCommandList->IASetIndexBuffer(&indexBufferView);
-    mCommandList->SetDescriptorHeaps(1, mPrism->GetSceneManager().GetModel().GetDescriptorHeapAddress());
-    auto hCbvHeap = mPrism->GetSceneManager().GetModel().GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart();
+    mCommandList->SetDescriptorHeaps(1, mPrism->GetCurrentScene()->GetModel().GetDescriptorHeapAddress());
+    auto hCbvHeap = mPrism->GetCurrentScene()->GetModel().GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart();
     mCommandList->SetGraphicsRootDescriptorTable(0, hCbvHeap);
-    mCommandList->DrawIndexedInstanced(mPrism->GetSceneManager().GetModel().GetIndicesNum(), 1, 0, 0, 0);
+    mCommandList->DrawIndexedInstanced(mPrism->GetCurrentScene()->GetModel().GetIndicesNum(), 1, 0, 0, 0);
 
 
     PresentBackBuffer();

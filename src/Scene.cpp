@@ -1,7 +1,7 @@
 ﻿#include "Scene.h"
 
-
-void Scene::Init(PrismBase* pPrism) {
+#include "Prism.h"
+void Scene::Init(Prism* pPrism) {
 
 	mPrism = pPrism; 
 

@@ -71,10 +71,10 @@
     <ClCompile Include="src\ModelManager.cpp">
       <Filter>Manager&amp;Controller</Filter>
     </ClCompile>
-    <ClCompile Include="src\SceneManager.cpp">
+    <ClCompile Include="src\WindowController.cpp">
       <Filter>Manager&amp;Controller</Filter>
     </ClCompile>
-    <ClCompile Include="src\WindowController.cpp">
+    <ClCompile Include="src\Scene.cpp">
       <Filter>Manager&amp;Controller</Filter>
     </ClCompile>
   </ItemGroup>
@@ -144,10 +144,10 @@
     <ClInclude Include="src\include\ModelManager.h">
       <Filter>Manager&amp;Controller</Filter>
     </ClInclude>
-    <ClInclude Include="src\include\SceneManager.h">
+    <ClInclude Include="src\include\WindowController.h">
       <Filter>Manager&amp;Controller</Filter>
     </ClInclude>
-    <ClInclude Include="src\include\WindowController.h">
+    <ClInclude Include="src\include\Scene.h">
       <Filter>Manager&amp;Controller</Filter>
     </ClInclude>
   </ItemGroup>

@@ -5,7 +5,9 @@ bool Prism::Initialize(HINSTANCE pHInstance) {
     mWindowController.Init(pHInstance);
     mConsoleController.Init();
 	mD3DController.Init(this);
-	mSceneManager.Init(this);
+
+	mCurrentScene = new Scene();
+	mCurrentScene->Init(this);
 
 	return true;
     
@@ -28,7 +30,7 @@ int Prism::Run() {
         }
         else {
 
-            mSceneManager.Update();
+            mCurrentScene->Update();
             mD3DController.Render();
 
         }
