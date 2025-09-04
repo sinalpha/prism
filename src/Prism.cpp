@@ -18,6 +18,8 @@ int Prism::Run() {
 
     MSG msg = { 0 };
     
+	mWindowController.InitImGui();
+
     while (msg.message != WM_QUIT)
     {
 
@@ -30,10 +32,17 @@ int Prism::Run() {
         }
         else {
 
+            mWindowController.StartImGuiFrame();
+            ImGui::ShowDemoWindow();
+
             mCurrentScene->Update();
             mD3DController.Render();
 
         }
+
+
+
+
     }
 
     return (int)msg.wParam;

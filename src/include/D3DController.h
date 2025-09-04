@@ -46,6 +46,7 @@ private:
 	bool InitSwapChain();
 	bool InitRenderTargetViewHeap();
 	bool InitRenderTarget();
+	bool InitSRVDescriptorHeapForImGui();
 
 	void CreatePipeLine();
 	void SetViewPort();

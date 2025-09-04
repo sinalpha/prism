@@ -10,13 +10,12 @@ void D3DController::Init(Prism* pPrism) {
 	InitCommandInterfaces();
 	InitFence();
 	InitFrameInterfaces();
-
+	InitSRVDescriptorHeapForImGui();
 }
 
 void D3DController::Render() {
 
     CreatePipeLine();
-
     SetCommandList();
 
 }
@@ -206,6 +205,17 @@ bool D3DController::InitRenderTarget() {
 
     return true;
 
+}
+
+bool D3DController::InitSRVDescriptorHeapForImGui() {
+    D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+    desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    desc.NumDescriptors = csmFrameCount;
+    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    if (mDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(mSRVDescriptorHeapForImGui.GetAddressOf())) != S_OK)
+        return false;
+    mDescriptorHeapAllocator.Create(mDevice.Get(), mSRVDescriptorHeapForImGui.Get());
+    return true;
 }
 
 void D3DController::CreatePipeLine() {
@@ -413,10 +423,13 @@ void D3DController::SetCommandList() {
     D3D12_INDEX_BUFFER_VIEW indexBufferView = mPrism->GetCurrentScene()->GetModel().GetIndexBufferView();
     mCommandList->IASetIndexBuffer(&indexBufferView);
     mCommandList->SetDescriptorHeaps(1, mPrism->GetCurrentScene()->GetModel().GetDescriptorHeapAddress());
+	mCommandList->SetDescriptorHeaps(1, mSRVDescriptorHeapForImGui.GetAddressOf());
     auto hCbvHeap = mPrism->GetCurrentScene()->GetModel().GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart();
     mCommandList->SetGraphicsRootDescriptorTable(0, hCbvHeap);
     mCommandList->DrawIndexedInstanced(mPrism->GetCurrentScene()->GetModel().GetIndicesNum(), 1, 0, 0, 0);
 
+    ImGui::Render();
+    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), GetCommandListPtr().Get());
 
     PresentBackBuffer();
 

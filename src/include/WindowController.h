@@ -4,16 +4,29 @@
 
 #include <Windows.h>
 
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx12.h"
+
+#include "DescriptorHeapAllocator.h"
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+static DescriptorHeapAllocator* gDescriptorHeapAllocator;
+
 class Prism;
 class WindowController {
 public:
 
 	WindowController() = default;
-	~WindowController() = default;
+	~WindowController();
 
 	static LRESULT MsgProc(HWND, UINT, WPARAM, LPARAM);
 
 	void Init(HINSTANCE, Prism*);
+	
+	void InitImGui();
+	void StartImGuiFrame();
 
 	int GetClientWidth();
 	int GetClientHeight();
@@ -21,6 +34,8 @@ public:
 	HWND GetWindowHandler();
 
 private:
+
+
 
 	Prism* mPrism{ nullptr };
 
