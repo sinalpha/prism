@@ -2,7 +2,7 @@
 
 bool Prism::Initialize(HINSTANCE pHInstance) {
 
-    mWindowController.Init(pHInstance);
+    mWindowController.Init(pHInstance, this);
     mConsoleController.Init();
 	mD3DController.Init(this);
 

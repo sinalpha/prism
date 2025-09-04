@@ -1,6 +1,11 @@
 #include "WindowController.h"
 
-void WindowController::Init(HINSTANCE pH) {
+#include "Prism.h"
+
+
+void WindowController::Init(HINSTANCE pH, Prism* pPrism) {
+
+	mPrism = pPrism;
 
     bool result;
 

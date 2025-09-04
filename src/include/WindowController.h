@@ -4,6 +4,7 @@
 
 #include <Windows.h>
 
+class Prism;
 class WindowController {
 public:
 
@@ -12,7 +13,7 @@ public:
 
 	static LRESULT MsgProc(HWND, UINT, WPARAM, LPARAM);
 
-	void Init(HINSTANCE);
+	void Init(HINSTANCE, Prism*);
 
 	int GetClientWidth();
 	int GetClientHeight();
@@ -20,6 +21,8 @@ public:
 	HWND GetWindowHandler();
 
 private:
+
+	Prism* mPrism{ nullptr };
 
 	HINSTANCE mHInstance{ NULL };
 	WNDCLASSEX mWindowClass{ NULL };
