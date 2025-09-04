@@ -5,7 +5,7 @@ void Scene::Init(Prism* pPrism) {
 
 	mPrism = pPrism; 
 
-    mModel = Model(mPrism->GetD3DController().GetDevice(), mPrism->GetD3DController().GetCommandList());
+    mModel = Model(mPrism->GetD3DController().GetDevicePtr(), mPrism->GetD3DController().GetCommandListPtr());
     mModel.LoadModel("assets\\cottage_fbx.fbx");
 
 }

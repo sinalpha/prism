@@ -44,5 +44,3 @@ struct DescriptorHeapAllocator
         FreeIndices.push_back(cpu_idx);
     }
 };
-
-static DescriptorHeapAllocator gDescriptorHeapAllocator;

@@ -12,6 +12,7 @@
 
 #include "ShaderReader.h"
 #include "helper.h"
+#include "DescriptorHeapAllocator.h"
 
 class Prism;
 class D3DController {
@@ -20,12 +21,14 @@ public:
 	void Init(Prism*);
 	void Render();
 
-	inline Microsoft::WRL::ComPtr<ID3D12Device>& GetDevice() { return mDevice; }
-	inline Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>& GetCommandList() { return mCommandList; }
+	inline Microsoft::WRL::ComPtr<ID3D12Device>& GetDevicePtr() { return mDevice; }
+	inline Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>& GetCommandListPtr() { return mCommandList; }
+	inline DescriptorHeapAllocator& GetDescriptorHeapAllocator() { return mDescriptorHeapAllocator; }
 
 private:
 
 	Prism* mPrism{ nullptr };
+	DescriptorHeapAllocator mDescriptorHeapAllocator;
 
 	void GetHardwareAdapter(IDXGIFactory2*, IDXGIAdapter1**);
 
