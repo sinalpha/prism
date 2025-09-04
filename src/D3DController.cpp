@@ -63,7 +63,7 @@ bool D3DController::InitFactory() {
 
 bool D3DController::InitDevice() {
 
-    if (scmUseWarpDevice)
+    if (csmUseWarpDevice)
     {
         Microsoft::WRL::ComPtr<IDXGIAdapter> warpAdapter;
         ThrowIfFailed(mFactory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)));
@@ -151,7 +151,7 @@ bool D3DController::InitSwapChain() {
 
     // Describe and create the swap chain.
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-    swapChainDesc.BufferCount = scmFrameCount;
+    swapChainDesc.BufferCount = csmFrameCount;
     swapChainDesc.Width = mPrism->GetWindowController().GetClientWidth();
     swapChainDesc.Height = mPrism->GetWindowController().GetClientHeight();
     swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -181,7 +181,7 @@ bool D3DController::InitRenderTargetViewHeap() {
 
     // Describe and create a render target view (RTV) descriptor heap.
     D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-    rtvHeapDesc.NumDescriptors = scmFrameCount;
+    rtvHeapDesc.NumDescriptors = csmFrameCount;
     rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
     rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     ThrowIfFailed(mDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&mBackBufferViewHeap)));
@@ -197,7 +197,7 @@ bool D3DController::InitRenderTarget() {
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(mBackBufferViewHeap->GetCPUDescriptorHandleForHeapStart());
 
     // Create a RTV for each frame.
-    for (UINT n = 0; n < scmFrameCount; ++n)
+    for (UINT n = 0; n < csmFrameCount; ++n)
     {
         ThrowIfFailed(mSwapChain->GetBuffer(n, IID_PPV_ARGS(&mRenderTargets[n])));
         mDevice->CreateRenderTargetView(mRenderTargets[n].Get(), nullptr, rtvHandle);

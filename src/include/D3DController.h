@@ -23,7 +23,13 @@ public:
 
 	inline Microsoft::WRL::ComPtr<ID3D12Device>& GetDevicePtr() { return mDevice; }
 	inline Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>& GetCommandListPtr() { return mCommandList; }
+	inline Microsoft::WRL::ComPtr<ID3D12CommandAllocator>& GetCommandAllocatorPtr() { return mCommandAllocator; }
+	inline Microsoft::WRL::ComPtr<ID3D12CommandQueue>& GetCommandQueuePtr() { return mCommandQueue; }
+	inline Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>& GetSRVDescriptorHeapForImGuiPtr() { return mSRVDescriptorHeapForImGui; }
 	inline DescriptorHeapAllocator& GetDescriptorHeapAllocator() { return mDescriptorHeapAllocator; }
+
+	const static UINT csmFrameCount{ 2 };
+	const static bool csmUseWarpDevice{ false };
 
 private:
 
@@ -50,9 +56,6 @@ private:
 	void WaitDrawDone();
 	void SetCommandList();
 
-	static const UINT scmFrameCount{ 2 };
-	static const bool scmUseWarpDevice{ false };
-
 	Microsoft::WRL::ComPtr<ID3D12Device> mDevice;
 	Microsoft::WRL::ComPtr<IDXGIFactory4> mFactory;
 
@@ -71,10 +74,11 @@ private:
 
 	HRESULT mHr{ 0 };
 
-	Microsoft::WRL::ComPtr<ID3D12Resource> mRenderTargets[scmFrameCount];
+	Microsoft::WRL::ComPtr<ID3D12Resource> mRenderTargets[csmFrameCount];
 	Microsoft::WRL::ComPtr<IDXGISwapChain4> mSwapChain;
 	UINT mFrameIndex{ 0 };
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mBackBufferViewHeap;
 	UINT mBackBufferViewDescriptorSize{ 0 };
 
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mSRVDescriptorHeapForImGui{ nullptr };
 };
