@@ -1,6 +1,8 @@
 ﻿#include "Scene.h"
 
 #include "Prism.h"
+
+//리펙토링 필요
 void Scene::Init(Prism* pPrism) {
 
 	mPrism = pPrism; 
@@ -10,6 +12,7 @@ void Scene::Init(Prism* pPrism) {
 
 }
 
+//리펙토링 필요
 void Scene::Update() {
 
     //回転用ラジアン

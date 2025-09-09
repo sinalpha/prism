@@ -3,14 +3,16 @@
 #include "Prism.h"
 
 WindowController::~WindowController() {
+
     ImGui_ImplDX12_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
     DestroyWindow(mHWindow);
     UnregisterClass(L"WINDOW_CLASS", mHInstance);
+
 }
 
-
+//리펙토링 필요
 void WindowController::Init(HINSTANCE pH, Prism* pPrism) {
 
 	mPrism = pPrism;
@@ -130,7 +132,9 @@ void WindowController::InitImGui() {
 }
 
 void WindowController::StartImGuiFrame() {
+
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
+
 }

@@ -6,6 +6,7 @@ bool Prism::Initialize(HINSTANCE pHInstance) {
     mConsoleController.Init();
 	mD3DController.Init(this);
 
+    //리펙토링 필요
 	mCurrentScene = new Scene();
 	mCurrentScene->Init(this);
 
@@ -32,6 +33,7 @@ int Prism::Run() {
         }
         else {
 
+            //리펙토링 필요
             mWindowController.StartImGuiFrame();
             ImGui::ShowDemoWindow();
 

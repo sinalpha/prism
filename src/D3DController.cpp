@@ -3,6 +3,7 @@
 
 void D3DController::Init(Prism* pPrism) {
 
+    
 	mPrism = pPrism;
 
 	InitFactory();
@@ -11,23 +12,30 @@ void D3DController::Init(Prism* pPrism) {
 	InitFence();
 	InitFrameInterfaces();
 	InitSRVDescriptorHeapForImGui();
+
+
 }
 
 void D3DController::Render() {
 
+
     CreatePipeLine();
     SetCommandList();
+
 
 }
 
 void D3DController::GetHardwareAdapter(IDXGIFactory2* pFactory, IDXGIAdapter1** ppAdapter)
 {
+
+
     Microsoft::WRL::ComPtr<IDXGIAdapter1> adapter;
     *ppAdapter = nullptr;
 
-    for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != pFactory->EnumAdapters1(adapterIndex, &adapter); ++adapterIndex)
+    for (UINT adapterIndex{ 0 }; DXGI_ERROR_NOT_FOUND != pFactory->EnumAdapters1(adapterIndex, &adapter); ++adapterIndex)
     {
         DXGI_ADAPTER_DESC1 desc;
+       
         adapter->GetDesc1(&desc);
 
         if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
@@ -46,25 +54,29 @@ void D3DController::GetHardwareAdapter(IDXGIFactory2* pFactory, IDXGIAdapter1** 
     }
 
     *ppAdapter = adapter.Detach();
-}
 
+
+}
 
 bool D3DController::InitFactory() {
 
 
     UINT dxgiFactoryFlags = 0;
 
-    ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&mFactory)));
+    ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(mFactory.GetAddressOf())));
 
     return true;
+
 
 }
 
 bool D3DController::InitDevice() {
 
+
     if (csmUseWarpDevice)
     {
         Microsoft::WRL::ComPtr<IDXGIAdapter> warpAdapter;
+        
         ThrowIfFailed(mFactory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)));
 
         ThrowIfFailed(D3D12CreateDevice(
@@ -76,6 +88,7 @@ bool D3DController::InitDevice() {
     else
     {
         Microsoft::WRL::ComPtr<IDXGIAdapter1> hardwareAdapter;
+        
         GetHardwareAdapter(mFactory.Get(), &hardwareAdapter);
 
         ThrowIfFailed(D3D12CreateDevice(
@@ -87,12 +100,14 @@ bool D3DController::InitDevice() {
 
     return true;
 
+
+
 }
 
 bool D3DController::InitCommandInterfaces() {
 
 
-    // Describe and create the command queue.
+
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
     queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
@@ -107,20 +122,27 @@ bool D3DController::InitCommandInterfaces() {
 
 
     return true;
+
+
 }
 
 bool D3DController::InitFence() {
 
+
     ThrowIfFailed(mDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence)));
+
     if (nullptr == (mFenceEvent = CreateEventEx(nullptr, FALSE, FALSE, EVENT_ALL_ACCESS))) {
 
         MessageBox(nullptr, L"err", L"Failed to create Fence objects", MB_OK);
         return false;
 
     }
+
     mFenceValue = 1;
 
     return true;
+
+
 }
 
 bool D3DController::InitFrameInterfaces() {
@@ -136,7 +158,6 @@ bool D3DController::InitFrameInterfaces() {
         return false;
     }
 
-
     if (!InitRenderTarget()) {
         MessageBox(nullptr, L"Failed to initialize render target.", L"Error", MB_OK);
         return false;
@@ -144,11 +165,12 @@ bool D3DController::InitFrameInterfaces() {
 
     return true;
 
+
 }
 
 bool D3DController::InitSwapChain() {
 
-    // Describe and create the swap chain.
+
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.BufferCount = csmFrameCount;
     swapChainDesc.Width = mPrism->GetWindowController().GetClientWidth();
@@ -159,8 +181,9 @@ bool D3DController::InitSwapChain() {
     swapChainDesc.SampleDesc.Count = 1;
 
     Microsoft::WRL::ComPtr<IDXGISwapChain1> initSwapChain;
+
     ThrowIfFailed(mFactory->CreateSwapChainForHwnd(
-        mCommandQueue.Get(),		// Swap chain needs the queue so that it can force a flush on it.
+        mCommandQueue.Get(),		
         mPrism->GetWindowController().GetWindowHandler(),
         &swapChainDesc,
         nullptr,
@@ -172,52 +195,68 @@ bool D3DController::InitSwapChain() {
     mFrameIndex = mSwapChain->GetCurrentBackBufferIndex();
 
     return true;
+
+
 }
 
 bool D3DController::InitRenderTargetViewHeap() {
 
-    // Create descriptor heaps.
 
     // Describe and create a render target view (RTV) descriptor heap.
     D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
     rtvHeapDesc.NumDescriptors = csmFrameCount;
     rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
     rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    
     ThrowIfFailed(mDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&mBackBufferViewHeap)));
 
     mBackBufferViewDescriptorSize = mDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     return true;
 
+
 }
 
 bool D3DController::InitRenderTarget() {
 
+
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(mBackBufferViewHeap->GetCPUDescriptorHandleForHeapStart());
 
     // Create a RTV for each frame.
-    for (UINT n = 0; n < csmFrameCount; ++n)
+    for (UINT n{ 0 }; n < csmFrameCount; ++n)
     {
+
         ThrowIfFailed(mSwapChain->GetBuffer(n, IID_PPV_ARGS(&mRenderTargets[n])));
+       
         mDevice->CreateRenderTargetView(mRenderTargets[n].Get(), nullptr, rtvHandle);
+        
         rtvHandle.Offset(1, mBackBufferViewDescriptorSize);
     }
 
     return true;
 
+
 }
 
 bool D3DController::InitSRVDescriptorHeapForImGui() {
+    
+    
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
     desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     desc.NumDescriptors = csmFrameCount;
     desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    
     if (mDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(mSRVDescriptorHeapForImGui.GetAddressOf())) != S_OK)
         return false;
+    
     mDescriptorHeapAllocator.Create(mDevice.Get(), mSRVDescriptorHeapForImGui.Get());
+    
     return true;
+
+
 }
 
+//리펙토링 필요
 void D3DController::CreatePipeLine() {
 
     //루트 시그네이처 설정
@@ -321,19 +360,27 @@ void D3DController::CreatePipeLine() {
 }
 
 void D3DController::SetViewPort() {
+
+
     mViewport.TopLeftX = 0.0f;
     mViewport.TopLeftY = 0.0f;
     mViewport.Width = (FLOAT)mPrism->GetWindowController().GetClientWidth();
     mViewport.Height = (FLOAT)mPrism->GetWindowController().GetClientHeight();
     mViewport.MinDepth = 0.0f;
     mViewport.MaxDepth = 1.0f;
+
+
 }
 
 void D3DController::SetScissorRect() {
+
+
     mScissorRect.left = 0;
     mScissorRect.top = 0;
     mScissorRect.right = mPrism->GetWindowController().GetClientWidth();
     mScissorRect.bottom = mPrism->GetWindowController().GetClientHeight();
+
+
 }
 
 void D3DController::ClearBackBuffer() {
@@ -350,18 +397,18 @@ void D3DController::ClearBackBuffer() {
     barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
     mCommandList->ResourceBarrier(1, &barrier);
 
-
     auto hBbvHeap = mBackBufferViewHeap->GetCPUDescriptorHandleForHeapStart();
     hBbvHeap.ptr += mFrameIndex * mBackBufferViewDescriptorSize;
     mCommandList->OMSetRenderTargets(1, &hBbvHeap, false, nullptr);
 
-
     const float clearColor[] = { .25f, .25f, .25f, 1.0f };
     mCommandList->ClearRenderTargetView(hBbvHeap, clearColor, 0, nullptr);
+
 
 }
 
 void D3DController::PresentBackBuffer() {
+
 
     D3D12_RESOURCE_BARRIER barrier;
     barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -379,7 +426,6 @@ void D3DController::PresentBackBuffer() {
 
     WaitDrawDone();
 
-
     mSwapChain->Present(1, 0);
 
     mCommandAllocator.Get()->Reset();
@@ -391,7 +437,7 @@ void D3DController::PresentBackBuffer() {
 
 void D3DController::WaitDrawDone() {
 
-    //fvale가 코맨드 종료 후에 팬스에 기록되도록 한다.
+    //gpu에서 처리를 완료하면 fvalue값을 시그널한다.
     UINT64 fvalue = mFenceValue;
     mCommandQueue->Signal(mFence.Get(), fvalue);
     mFenceValue++;
@@ -415,7 +461,8 @@ void D3DController::SetCommandList() {
     mCommandList->RSSetViewports(1, &mViewport);
     mCommandList->RSSetScissorRects(1, &mScissorRect);
     mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
-    mCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    mCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
+    //mCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST_ADJ);
     D3D12_VERTEX_BUFFER_VIEW vertexBufViews[] = {
         mPrism->GetCurrentScene()->GetModel().GetVertexBufferView(),
     };
